@@ -28,8 +28,28 @@ function check_same_user_and_room_exist(user_id,room,arr_data){
     });
 }
 
+function createRoom(user_id,receiver_id){
+    var user_id=Number(user_id);
+    var receiver_id=Number(receiver_id);
+    var room='';
+    if(user_id<receiver_id){
+        room=user_id.toString()+receiver_id.toString();
+    }else{
+        room=receiver_id.toString()+user_id.toString();
+    }
+    return room;
+}
+
+function check_same_user_exist(user_id,arr_data){
+    return arr_data.some(function(arr){
+        return arr.user_id==user_id;
+    });
+}
+
 module.exports={
     current_datetime,
     current_date,
-    check_same_user_and_room_exist
+    check_same_user_and_room_exist,
+    createRoom,
+    check_same_user_exist
 }

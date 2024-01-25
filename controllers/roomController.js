@@ -1,4 +1,5 @@
 const queries=require('../models/queries/queries');
+const utils=require('../utils/commonUtils');
 var onlineUsers=[];
 var onlineRooms=[];
 
@@ -109,6 +110,7 @@ async function userOnlineStatusResponse(user_id){
 
 async function checkUserData(user_id,access_token){
     var check_user_data=await queries.checkUserData(user_id,access_token);
+    console.log(check_user_data)
     if(check_user_data.length>0){
         return true;
     }else{
@@ -181,7 +183,13 @@ async function reportChat(user_id,access_token,receiver_id,room){
     var response={};
     var check_user=await queries.checkUserData(user_id,access_token);
     if(check_user.length){
-        var report_chat=await queries.reportChat(user_id,receiver_id,room);
+        //get last message in the room
+        var get_last_message=await queries.getLastMessage(user_id,room);
+        var message_id=0;
+        if(get_last_message.length>0){
+            message_id=get_last_message[0].id;
+        }
+        var report_chat=await queries.reportChat(user_id,message_id,receiver_id,room);
         if(report_chat>0){
             response={
                 status: true,
@@ -205,6 +213,107 @@ async function reportChat(user_id,access_token,receiver_id,room){
     return response;
 }
 
+async function checkUserData(user_id,access_token){
+    var check_user_data=await queries.checkUserData(user_id,access_token);
+    if(check_user_data.length>0){
+        return true;
+    }else{
+        return false;
+    }
+}
+
+async function check_user_already_blocked(user_id,receiver_id){
+    var check_user_data=await queries.check_user_already_blocked(user_id,receiver_id);
+    // console.log('hi',check_user_data.length);
+    // if(check_user_data.length>0){
+    //     return true;
+    // }else{
+    //     return false;
+    // }
+    return check_user_data;
+}
+
+async function block_user_chat(user_id,receiver_id,room,datetime){
+    console.log(user_id,receiver_id,room,datetime)
+    var check_user_data=await queries.block_user_chat(user_id,receiver_id,room,datetime);
+    return check_user_data;
+}
+
+async function save_block_message(message,message_type,room,room_type,senter_id,receiver_id,created_datetime,group_status){
+    var check_user_data=await queries.save_block_message(message,message_type,room,room_type,senter_id,receiver_id,created_datetime,group_status);
+    return check_user_data;
+}
+
+async function unblockUserChat(user_id,access_token,receiver_id,room){
+    var response={};
+    var current_datetime=utils.current_datetime();
+    //check user data
+    var check_user_data=await queries.checkUserData(user_id,access_token);
+    console.log(check_user_data)
+    if(check_user_data.length>0){
+        //check user already block
+        var check_user_already_blocked=await queries.check_user_already_blocked(user_id,receiver_id);
+        console.log(check_user_already_blocked)
+        if(check_user_already_blocked.length>0){
+            //remove from blocked chat list
+            var unblock=await queries.unblockChat(check_user_already_blocked[0].id,user_id,receiver_id,room);
+            console.log('block response',unblock)
+            if(unblock.affectedRows>0){
+                //save message
+                var message_data=[
+                    {
+                        user_id: user_id,
+                        datetime: current_datetime,
+                        delivered_status: 1,
+                        delivered_datetime: current_datetime,
+                        read_status: 1,
+                        read_datetime: current_datetime,
+                        status: 1
+                    }
+                ];
+                var save_block_message=await queries.saveUnblockMessage('unblock','notification',room,0,user_id,receiver_id,current_datetime,JSON.stringify(message_data));
+                console.log('saved message res ',save_block_message)
+                if(save_block_message>0){
+                    response={
+                        status: true,
+                        statuscode: 200,
+                        message: "success",
+                        room: room
+                    }
+                }else{
+                    response={
+                        status: false,
+                        statuscode: 400,
+                        message: "Unblock message not saved",
+                        room: room
+                    }
+                }
+            }else{
+                response={
+                    status: false,
+                    statuscode: 400,
+                    message: "Not updated in db",
+                    room: room
+                }
+            }
+        }else{
+            response={
+                status: false,
+                statuscode: 200,
+                message: "User not blocked",
+                room: room
+            }
+        }
+    }else{
+      response={
+        status: false,
+        statuscode: 200,
+        message: "No user data found",
+        room: room
+      }  
+    }
+    return response;
+}
 
 module.exports={
     joinRoom,
@@ -216,5 +325,9 @@ module.exports={
     userRoomData,
     disconnectUser,
     typingResponse,
-    reportChat
+    reportChat,
+    check_user_already_blocked,
+    block_user_chat,
+    save_block_message,
+    unblockUserChat
 }

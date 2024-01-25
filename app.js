@@ -15,6 +15,7 @@ const io=require('socket.io')(server,{
 const port=process.env.PORT || 3000;
 const roomController=require('./controllers/roomController');
 const messageController=require('./controllers/messageController');
+const utils=require('./utils/commonUtils');
 
 app.get('/',function(req,res){
     //console.log('express route called')
@@ -45,8 +46,12 @@ io.sockets.on('connection',async function(socket){
                         io.sockets.in(room).emit('room',{status: true,statuscode: 200,message: 'success',room: room});
                         //emit online user status 
                         var room_user_online_status=await roomController.userOnlineStatusResponse(receiver_id);
-                        //console.log(room_user_online_status)
+                        // console.log(room_user_online_status)
+                        // console.log(typeof(room+'_'+user_id))
+                        // console.log(io.sockets.adapter.rooms)
+                        // console.log(socket.id)
                         io.sockets.in(room+'_'+user_id).emit('online_user',room_user_online_status);
+                        console.log('yes')
                     }else{
                         io.sockets.in(socket.id).emit('room',{status: false, statuscode: 200, message: 'Data is missing',room: ''});
                     }
@@ -68,16 +73,18 @@ io.sockets.on('connection',async function(socket){
                     var optional_text=data.optional_text ? data.optional_text : '';
                     var duration=data.duration ? data.duration : 0;
                     var thumbnail=data.thumbnail ? data.thumbnail : '';
+                    //replay 
                     var message_id=data.message_id ? data.message_id : 0;
                     var room=await roomController.createRoom(user_id,receiver_id);
                     var room_type=data.room_type ? data.room_type : 0;
                     var limit=data.limit ? data.limit : 1;
                     var page_number=data.page_number ? data.page_number : 0;
                     var last_message_id=data.last_message_id ? data.last_message_id : '';
+                    var file_size=data.file_size ? data.file_size : '';
                     //console.log('page number ',page_number)
                     //default value limit=1, page_number=0
                     if(user_id!='' && receiver_id!='' && message!='' && message_type!='' && room!=''){
-                        var sendMessage=await messageController.sendMessage(user_id,receiver_id,room,room_type,message,message_type,optional_text,duration,thumbnail,message_id);
+                        var sendMessage=await messageController.sendMessage(user_id,receiver_id,room,room_type,message,message_type,optional_text,duration,thumbnail,message_id,file_size);
                         
                         console.log('send message response data ',sendMessage, sendMessage[0],sendMessage[1]);
     
@@ -363,9 +370,163 @@ io.sockets.on('connection',async function(socket){
 
         socket.on("test_changes",async function(data){
             try{
-                io.sockets.in(socket.id).emit('test_changes',{status:true, statuscode:200, message: "last changes affected on 22-11-2023"});
+                io.sockets.in(socket.id).emit('test_changes',{status:true, statuscode:200, message: "last changes affected on 02-01-2024"});
             }catch(e){
                 console.error('Error in test change',e)
+            }
+        });
+
+        socket.on('block',async function(data){
+            try{
+                if(typeof(data)=='object'){
+                    var user_id=data.user_id ? data.user_id : '';
+                    var receiver_id=data.receiver_id ? data.receiver_id : ''; 
+                    var accessToken=data.access_token ? data.access_token : ''; 
+                    if(user_id!='' && receiver_id!=''){
+                        var room=await roomController.createRoom(user_id,receiver_id);
+                        var check_user_data=await roomController.checkUserData(user_id,accessToken);
+                        // console.log(check_user_data);
+                        if(check_user_data==true){
+                            let check_user_already_blocked=await roomController.check_user_already_blocked(data.user_id,data.receiver_id);
+                            if(check_user_already_blocked.length>0){
+                                io.sockets.in(socket.id).emit('block',{status: true,statuscode: 200,message: 'User already blocked',room: room});
+                            }else{
+                                let datetime=utils.current_datetime()
+                                //console.log(datetime);
+                                let save_block_data=await roomController.block_user_chat(data.user_id,data.receiver_id,room,datetime);
+                                if(save_block_data==true){
+                                    // console.log('hlo',save_block_data)
+                                    let message='block';
+                                    let message_type='notification';
+                                    let room_type=0;
+                                    let senter_id=data.user_id;
+                                    let receiver_id=data.receiver_id;
+                                    let created_datetime=datetime;
+                                    let group_status=[];
+                                    group_status.push({
+                                        user_id: data.user_id,
+                                        datetime: datetime,
+                                        delivered_status: 1,
+                                        delivered_datetime: datetime,
+                                        read_status: 1,
+                                        read_datetime: datetime,
+                                        status: 1
+                                    });
+                                    //save block message in chat_list
+                                    let save_block_message=await roomController.save_block_message(message,message_type,room,room_type,senter_id,receiver_id,created_datetime,JSON.stringify(group_status));                                    console.log(save_block_message)
+                                    // console.log(save_block_message)
+                                    if(save_block_message>0){
+                                        // console.log('Data saved to chat list')
+                                        io.sockets.in(socket.id).emit('block',{status: true,statuscode: 200,message: 'Blocked',room: room});
+                                        //emit messages to user
+                                        var sender_roomChatMessage=await messageController.roomChatMessage(user_id,receiver_id,room,1,'');
+                                        io.sockets.in(room+'_'+user_id).emit('message',sender_roomChatMessage);
+                                        var sender_chat_list=await messageController.chatListResponseWithoutToken(user_id);
+                                        io.sockets.in(user_id).emit('chat_list',sender_chat_list);
+                                    }else{
+                                        // console.error('Data not saved to chat list')
+                                        io.sockets.in(socket.id).emit('block',{status: false,statuscode: 200,message: 'Data not saved to chat list',room: room});
+                                    }
+                                    // io.sockets.in(socket.id).emit('block',{status: true,statuscode: 200,message: 'success',room: room});   
+                                }else{
+                                    io.sockets.in(socket.id).emit('block',{status: false,statuscode: 200,message: 'Not Blocked',room: room}); 
+                                }
+                            }
+                        }else{
+                            io.sockets.in(socket.id).emit('block',{status: false,statuscode: 200,message: 'Invalid user',room: room});
+                        }  
+                    }else{
+                        io.sockets.in(socket.id).emit('room',{status: false, statuscode: 200, message: 'Data is missing',room: ''});
+                    }
+                }else{
+                    io.sockets.in(socket.id).emit('message',{status: false, statuscode: 200, message: 'Input data is not valid',room: ''});
+                }
+            }catch(e){
+                console.error('Error in message sending ',e)
+            }
+        });
+
+        socket.on('unblock',async function(data){
+            try{
+                if(typeof(data)=='object'){
+                    var user_id=data.user_id ? data.user_id : '';
+                    var access_token=data.access_token ? data.access_token : '';
+                    var receiver_id=data.receiver_id ? data.receiver_id : '';
+                    if(user_id!='' && access_token!='' && receiver_id!=''){
+                        var room=await roomController.createRoom(user_id,receiver_id);
+                        //unblock chat list
+                        var unblock_user_chat=await roomController.unblockUserChat(user_id,access_token,receiver_id,room);
+                        io.sockets.in(socket.id).emit('unblock',unblock_user_chat);
+                        //emit message and chat_list
+                        console.log(Object.keys(unblock_user_chat).length);
+                        if(Object.keys(unblock_user_chat).length>0){
+                            console.log(unblock_user_chat.status)
+                            if(unblock_user_chat.status){
+                                var sender_roomChatMessage=await messageController.roomChatMessage(user_id,receiver_id,room,1,'');
+                                io.sockets.in(room+'_'+user_id).emit('message',sender_roomChatMessage);
+                                var sender_chat_list=await messageController.chatListResponseWithoutToken(user_id);
+                                io.sockets.in(user_id).emit('chat_list',sender_chat_list);
+                            }
+                        }
+                    }else{
+                        io.sockets.in(socket.id).emit('unblock',{status: false, statuscode: 200, message: 'Data is empty',room: ''});
+                    }
+                }else{
+                    io.sockets.in(socket.id).emit('unblock',{status: false, statuscode: 200, message: 'Input data is not valid',room: ''});
+                }
+            }catch(e){
+                console.error('Error in unblock chat list', e);
+            }
+        });
+
+        socket.on('replay_message',async function(data){
+            try{
+
+            }catch(e){
+                console.error('Error in replay message', e);
+            }
+        });
+
+        socket.on('forward_message',async function(data){
+            try{
+                if(typeof(data)=='object'){
+                    var user_id=data.user_id ? data.user_id : '';
+                    var to_users=data.to_users ? data.to_users : '';
+                    var message_ids=data.message_ids ? data.message_ids : '';
+                    if(user_id!='' && to_users!='' && message_ids!=''){
+                        var save_forward_message=await messageController.forwardMessages(user_id,to_users,message_ids);
+                        console.log('result ',save_forward_message)
+                        if(save_forward_message.status){
+                            var emit_users=save_forward_message.emit_users;
+                            console.log(emit_users)
+                            for(var i=0; i<emit_users.length; i++){
+                                var receiver_room_messages=await messageController.roomChatMessage(emit_users[i].user_id,user_id,emit_users[i].room,emit_users[i].message_count,0);
+                                //console.log(receiver_room_messages);
+                                io.sockets.in(emit_users[i].room+'_'+emit_users[i].user_id).emit('message',receiver_room_messages);
+                                var receiver_chat_list=await messageController.chatListResponseWithoutToken(emit_users[i].user_id);
+                                io.sockets.in(emit_users[i].user_id).emit('chat_list',receiver_chat_list);
+                                //send message to sender room
+                                var sender_room_messages=await messageController.roomChatMessage(user_id,emit_users[i].user_id,emit_users[i].room,emit_users[i].message_count,0);
+                                io.sockets.in(emit_users[i].room+'_'+user_id).emit('message',sender_room_messages);
+                                console.log(emit_users[i].room+'_'+user_id)
+                            }
+                            //send sender chat list
+                            var sender_chat_list=await messageController.chatListResponseWithoutToken(user_id);
+                            io.sockets.in(user_id).emit('chat_list',sender_chat_list);
+                            delete save_forward_message.emit_users;
+                            delete save_forward_message.message_count;
+                            io.sockets.in(socket.id).emit('forward_message',save_forward_message);
+                        }else{
+                            io.sockets.in(socket.id).emit('forward_message',save_forward_message); 
+                        }
+                    }else{
+                        io.sockets.in(socket.id).emit('forward_message',{status: false, statuscode: 200, message: 'Data is empty'}); 
+                    }
+                }else{
+                    io.sockets.in(socket.id).emit('forward_message',{status: false, statuscode: 200, message: 'Input data is not valid'});
+                }
+            }catch(e){
+                console.error('Error in forward message');
             }
         });
 

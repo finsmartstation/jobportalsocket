@@ -2,8 +2,9 @@ const queries=require('../models/queries/queries');
 const utils=require('../utils/commonUtils');
 const env=require('dotenv').config();
 const baseURL=process.env.BASEURL;
+const notificationController=require('./notificationController');
 
-async function sendMessage(user_id,receiver_id,room,room_type,message,message_type,optional_text,duration,thumbnail,message_id=0){
+async function sendMessage(user_id,receiver_id,room,room_type,message,message_type,optional_text,duration,thumbnail,message_id=0,file_size){
     var current_datetime=utils.current_datetime();
     var user_blocked_status=false;
     var delivered_status=0;
@@ -75,14 +76,16 @@ async function sendMessage(user_id,receiver_id,room,room_type,message,message_ty
     if(message_type=='text'){
         var save_message=await queries.saveTextMessage(current_datetime,user_id,receiver_id,room,room_type,message,message_type,delivered_status,read_status,JSON.stringify(message_data),message_id);
     }else if(message_type=='image'){
-        var save_message=await queries.saveImageMessage(current_datetime,user_id,receiver_id,room,room_type,message,message_type,optional_text,delivered_status,read_status,JSON.stringify(message_data),message_id);
+        var save_message=await queries.saveImageMessage(current_datetime,user_id,receiver_id,room,room_type,message,message_type,optional_text,delivered_status,read_status,JSON.stringify(message_data),message_id,file_size);
     }else if(message_type=='doc'){
-        var save_message=await queries.saveDocMessage(current_datetime,user_id,receiver_id,room,room_type,message,message_type,optional_text,thumbnail,delivered_status,read_status,JSON.stringify(message_data),message_id);
+        var save_message=await queries.saveDocMessage(current_datetime,user_id,receiver_id,room,room_type,message,message_type,optional_text,thumbnail,delivered_status,read_status,JSON.stringify(message_data),message_id,file_size);
     }else if(message_type=='video'){
-        var save_message=await queries.saveVideoMessage(current_datetime,user_id,receiver_id,room,room_type,message,message_type,optional_text,thumbnail,duration,delivered_status,read_status,JSON.stringify(message_data),message_id);
+        var save_message=await queries.saveVideoMessage(current_datetime,user_id,receiver_id,room,room_type,message,message_type,optional_text,thumbnail,duration,delivered_status,read_status,JSON.stringify(message_data),message_id,file_size);
     }else if(message_type=='voice'){
-        var save_message=await queries.saveVoiceMessage(current_datetime,user_id,receiver_id,room,room_type,message,message_type,optional_text,thumbnail,duration,delivered_status,read_status,JSON.stringify(message_data),message_id);
+        var save_message=await queries.saveVoiceMessage(current_datetime,user_id,receiver_id,room,room_type,message,message_type,optional_text,thumbnail,duration,delivered_status,read_status,JSON.stringify(message_data),message_id,file_size);
     }
+    //send notification
+    let send_notification=await notificationController.sendNotification(user_id,receiver_id,room,message,message_type);
     return [save_message,user_blocked_status];
 }
 
@@ -115,8 +118,10 @@ async function roomChatMessage(user_id,receiver_id,room,limit=0,last_message_id)
     var user_name='';
     var profile_pic=baseURL+'uploads/default/profile.png';
     var get_user_profile=await queries.UserProfile(receiver_id);
+    var unique_id='';
     if(get_user_profile.length>0){
         user_name=get_user_profile[0].username.trim();
+        unique_id=get_user_profile[0].unique_id;
         if(get_user_profile[0].profile_pic!=''){
             profile_pic=baseURL+get_user_profile[0].profile_pic;
         }
@@ -139,6 +144,7 @@ async function roomChatMessage(user_id,receiver_id,room,limit=0,last_message_id)
             var replay_thumbnail='';
             var forwarded_count=0;
             var message_status=0;
+            var replay_file_size='';
             if(roomMessages[i].replay_id!=0){
                 var replay_message_details=await queries.getReplayMessageDetails(roomMessages[i].replay_id);
                 console.log(replay_message_details)
@@ -148,14 +154,17 @@ async function roomChatMessage(user_id,receiver_id,room,limit=0,last_message_id)
                     replay_senter=replay_message_details[0].senter_id;
                     replay_duration=replay_message_details[0].duration;
                     replay_thumbnail=replay_message_details[0].replay_thumbnail;
+                    replay_file_size=replay_message_details[0].file_size;
                     if(replay_message_type=='image' || replay_message_type=='voice' || replay_message_type=='doc'){
                         if(replay_message!=''){
+                            console.log(baseURL);
                             replay_message=baseURL+replay_message;
                         }
                     }
                     if(replay_message_type=='video'){
                         if(replay_thumbnail!=''){
                             replay_message=baseURL+replay_thumbnail;
+                            console.log('replay ',replay_message);
                         }
                     }
                     if(replay_senter==user_id){
@@ -192,7 +201,7 @@ async function roomChatMessage(user_id,receiver_id,room,limit=0,last_message_id)
                     roomMessages[i].message=baseURL+roomMessages[i].message;
                 }
             }else if(roomMessages[i].message_type=='notification'){
-                console.log('yes',roomMessages[i].message)
+                //console.log('yes',roomMessages[i].message)
                 if(roomMessages[i].message=='block'){
                     roomMessages[i].message='You bloked this user.';
                 }else if(roomMessages[i].message=='unblock'){
@@ -216,10 +225,12 @@ async function roomChatMessage(user_id,receiver_id,room,limit=0,last_message_id)
                 replay_message_type: replay_message_type,
                 replay_senter: replay_senter,
                 replay_duration: replay_duration.toString(),
+                replay_file_size: replay_file_size,
                 forward_id: roomMessages[i].forward_id.toString(),
                 forwarded_count: forwarded_count.toString(),
                 optional_text: roomMessages[i].optional_text,
-                thumbnail: roomMessages[i].thumbnail  
+                thumbnail: roomMessages[i].thumbnail,
+                file_size: roomMessages[i].file_size
             });
         }
         //console.log(roomMessages)
@@ -232,6 +243,7 @@ async function roomChatMessage(user_id,receiver_id,room,limit=0,last_message_id)
            username: user_name,
            profile_pic: profile_pic,
            user_block_status: user_block_status.toString(),
+           unique_id: unique_id,
            list: message_list
         }
     }
@@ -263,6 +275,7 @@ async function chatListResponse(user_id,access_token){
                 datetime: recent_chat_list[i].created_datetime,
                 user_id: recent_chat_list[i].user_id.toString(),
                 username: recent_chat_list[i].username.trim(),
+                unique_id: recent_chat_list[i].unique_id,
                 profile_pic: profile_pic,
                 room: recent_chat_list[i].room.toString(),
                 message: recent_chat_list[i].message,
@@ -310,6 +323,7 @@ async function chatListResponseWithoutToken(user_id){
             datetime: recent_chat_list[i].created_datetime,
             user_id: recent_chat_list[i].user_id.toString(),
             username: recent_chat_list[i].username.trim(),
+            unique_id: recent_chat_list[i].unique_id,
             profile_pic: profile_pic,
             room: recent_chat_list[i].room.toString(),
             message: recent_chat_list[i].message,
@@ -483,13 +497,14 @@ async function messageRead(user_id,room){
 }
 
 async function searchRoomMessage(user_id,receiver_id,room,search){
-    var response={};
     var roomMessages=await queries.searchRoomMessage(user_id,room,search);
     var user_name='';
+    var unique_id='';
     var profile_pic=baseURL+'uploads/default/profile.png';
     var get_user_profile=await queries.UserProfile(receiver_id);
     if(get_user_profile.length>0){
         user_name=get_user_profile[0].username.trim();
+        unique_id=get_user_profile[0].unique_id;
         if(get_user_profile[0].profile_pic!=''){
             profile_pic=baseURL+get_user_profile[0].profile_pic;
         }
@@ -511,6 +526,7 @@ async function searchRoomMessage(user_id,receiver_id,room,search){
         var replay_thumbnail='';
         var forwarded_count=0;
         var message_status=0;
+        var replay_file_size='';
         if(roomMessages[i].replay_id!=0){
             var replay_message_details=await queries.getReplayMessageDetails(roomMessages[i].replay_id);
             console.log(replay_message_details)
@@ -520,6 +536,7 @@ async function searchRoomMessage(user_id,receiver_id,room,search){
                 replay_senter=replay_message_details[0].senter_id;
                 replay_duration=replay_message_details[0].duration;
                 replay_thumbnail=replay_message_details[0].replay_thumbnail;
+                replay_file_size=replay_message_details[0].file_size;
                 if(replay_message_type=='image' || replay_message_type=='voice' || replay_message_type=='doc'){
                     if(replay_message!=''){
                         replay_message=baseURL+replay_message;
@@ -581,10 +598,12 @@ async function searchRoomMessage(user_id,receiver_id,room,search){
             replay_message_type: replay_message_type,
             replay_senter: replay_senter,
             replay_duration: replay_duration.toString(),
+            replay_file_size: replay_file_size,
             forward_id: roomMessages[i].forward_id.toString(),
             forwarded_count: forwarded_count.toString(),
             optional_text: roomMessages[i].optional_text,
-            thumbnail: roomMessages[i].thumbnail  
+            thumbnail: roomMessages[i].thumbnail,
+            file_size: roomMessages[i].file_size 
         });
     }
     console.log(roomMessages)
@@ -597,6 +616,7 @@ async function searchRoomMessage(user_id,receiver_id,room,search){
            username: user_name,
            profile_pic: profile_pic,
            user_block_status: user_block_status.toString(),
+           unique_id: unique_id,
            list: message_list
         }
     }
@@ -624,6 +644,7 @@ async function searchChatList(user_id,access_token,search){
                 datetime: search_chat_list[i].created_datetime,
                 user_id: search_chat_list[i].user_id.toString(),
                 username: search_chat_list[i].username.trim(),
+                unique_id: search_chat_list[i].unique_id,
                 profile_pic: profile_pic,
                 room: search_chat_list[i].room.toString(),
                 message: search_chat_list[i].message,
@@ -632,7 +653,10 @@ async function searchChatList(user_id,access_token,search){
             });
         }
         //get message
-        var search_message=await queries.searchMessage(user_id,search);
+        var search_message=[];
+        if(search!=''){
+            search_message=await queries.searchMessage(user_id,search);
+        }
         console.log('search message',search_message.length);
         for(var j=0; j<search_message.length; j++){
             var user_profile_pic=baseURL+'uploads/default/profile.png';
@@ -640,11 +664,12 @@ async function searchChatList(user_id,access_token,search){
                 user_profile_pic=baseURL+search_message[j].profile_pic;
             }
             message_list.push({
-                id: search_message[j].id,
+                id: search_message[j].id.toString(),
                 created_datetime: search_message[j].created_datetime,
                 user_id: search_message[j].user_id.toString(),
                 room: search_message[j].room.toString(),
                 username: search_message[j].username,
+                unique_id: search_message[j].unique_id,
                 profile_pic: user_profile_pic,
                 message: search_message[j].message,
                 type: baseURL+search_message[j].type
@@ -671,6 +696,111 @@ async function searchChatList(user_id,access_token,search){
     return response;
 }
 
+async function forwardMessages(user_id,to_users,message_ids){
+    var response={};
+    var split_message_ids=message_ids.split(',');
+    var split_to_users=to_users.split(',');
+    var current_datetime=utils.current_datetime();
+    //console.log(split_message_ids,split_to_users);
+    var query='';
+    var query_values='';
+    var emit_user_data=[];
+    for(var i=0;i<split_message_ids.length;i++){
+        console.log('first ',split_message_ids[i])
+        var forward_message='';
+        var forward_message_type='';
+        var forward_optional_text='';
+        var forward_thumbnail='';
+        var forward_duration='';
+        //check forward message data
+        var check_forward_message=await queries.checkForwardMessage(split_message_ids[i]);
+        if(check_forward_message.length>0){
+            forward_message=check_forward_message[0].message;
+            forward_message_type=check_forward_message[0].message_type;
+            forward_optional_text=check_forward_message[0].optional_text;
+            forward_thumbnail=check_forward_message[0].thumbnail;
+            forward_duration=check_forward_message[0].duration;
+        }
+        for(var j=0;j<split_to_users.length;j++){
+            console.log('second ',split_to_users[j])
+            var room=await utils.createRoom(user_id,split_to_users[j]);
+            console.log('room data ',room)
+            console.log(split_to_users[j],emit_user_data)
+            //check user already exit in array
+            var check_same_user_exist=await utils.check_same_user_exist(split_to_users[j],emit_user_data);
+            //console.log(check_same_user_exist)
+            if(check_same_user_exist==false){
+                emit_user_data.push({
+                    user_id: split_to_users[j],
+                    room: room,
+                    message_count: split_message_ids.length
+                });
+            }
+            
+            var message_data=[
+                {
+                    user_id: user_id,
+                    datetime: current_datetime,
+                    delivered_status: 1,
+                    delivered_datetime: current_datetime,
+                    read_status: 1,
+                    read_datetime: current_datetime,
+                    status: 1
+                },{
+                    user_id: split_to_users[j],
+                    datetime: current_datetime,
+                    delivered_status: 0,
+                    delivered_datetime: '',
+                    read_status: 0,
+                    read_datetime: '',
+                    status: 1
+                }
+            ];
+            //console.log(message_data)
+            console.log('message id ',split_message_ids[i],message_data)
+            //set case update query
+            //query=query+"INSERT INTO `chat_list`(`created_datetime`, `senter_id`, `receiver_id`, `room`, `room_type`, `replay_id`, `forward_id`, `message`, `message_type`, `optional_text`, `thumbnail`, `duration`, `delivered_status`, `read_status`, `message_data`) VALUES ('"+current_datetime+"','"+user_id+"','"+split_to_users[j]+"','"+room+"','0','0','"+split_message_ids[i]+"','"+forward_message+"','"+forward_message_type+"','"+forward_optional_text+"','"+forward_thumbnail+"','"+forward_duration+"','1','1','"+JSON.stringify(message_data)+"');";
+            query_values=query_values+"('"+current_datetime+"','"+user_id+"','"+split_to_users[j]+"','"+room+"','0','0','"+split_message_ids[i]+"','"+forward_message+"','"+forward_message_type+"','"+forward_optional_text+"','"+forward_thumbnail+"','"+forward_duration+"','0','0','"+JSON.stringify(message_data)+"'),";
+            //send notification
+            let send_notification=await notificationController.sendNotification(user_id,split_to_users[j],room,forward_message,forward_message_type);
+
+        }
+    }
+    //trim data
+    query_values=query_values.replace(/(^,)|(,$)/g, "");
+    //console.log('query data ',query_values);
+    if(query_values!=''){
+        query="INSERT INTO `chat_list`(`created_datetime`, `senter_id`, `receiver_id`, `room`, `room_type`, `replay_id`, `forward_id`, `message`, `message_type`, `optional_text`, `thumbnail`, `duration`, `delivered_status`, `read_status`, `message_data`) VALUES "+query_values;
+        //console.log(query);
+        var save_forward_messages=await queries.saveForwardMessages(query);
+        console.log(save_forward_messages);
+        console.log(emit_user_data)
+        if(save_forward_messages>0){
+            //let send_notification=await notificationController.sendNotification(user_id,receiver_id,room,message,message_type);
+            response={
+                status: 200,
+                statuscode: true,
+                message: 'Success',
+                emit_users: emit_user_data
+            }
+        }else{
+            response={
+                status: 400,
+                statuscode: false,
+                message: 'Not saved to db'
+            }
+        }
+    }else{
+        response={
+            status: 200,
+            statuscode: false,
+            message: 'No message to forward'
+        }
+    }
+    return response;
+}
+
+
 module.exports={
     sendMessage,
     roomChatMessage,
@@ -679,5 +809,6 @@ module.exports={
     chatListResponseWithoutToken,
     messageRead,
     searchRoomMessage,
-    searchChatList
+    searchChatList,
+    forwardMessages
 }
