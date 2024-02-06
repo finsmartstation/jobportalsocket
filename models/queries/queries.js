@@ -209,6 +209,11 @@ async function getLastMessage(user_id,room){
     return results[0];
 }
 
+async function getUserPhoneNumber(user_id){
+    const results=await db.sequelize.query("SELECT * from `user` where id='"+user_id+"'");
+    return results[0];
+}
+
 module.exports={
     updateUserIsOnline,
     updateUserIsOffline,
@@ -243,5 +248,6 @@ module.exports={
     checkForwardMessage,
     saveForwardMessages,
     userDeviceToken,
-    getLastMessage
+    getLastMessage,
+    getUserPhoneNumber
 }

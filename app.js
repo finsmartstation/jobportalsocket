@@ -1,8 +1,10 @@
 const env=require('dotenv').config();
 const db=require('./models/config/db_connection');
 db.sequelize.sync();
-const app= require('express')();
+const express=require('express');
+const app= express();
 const server = require('http').Server(app);
+const bodyParser = require('body-parser');
 const io=require('socket.io')(server,{
     cors: {
       origin: "*",
@@ -11,12 +13,19 @@ const io=require('socket.io')(server,{
       credentials: true
     }
   });
-  console.log(process.env.PORT)
+console.log(process.env.PORT)
 const port=process.env.PORT || 3000;
 const roomController=require('./controllers/roomController');
 const messageController=require('./controllers/messageController');
 const utils=require('./utils/commonUtils');
+const router=require('./Router/router');
 
+app.use(express.json());
+app.use(bodyParser.json({ limit: '200mb', extended: true }));
+app.use(bodyParser.urlencoded({ limit: '200mb', extended: true, parameterLimit: 50000 }));
+app.use(bodyParser.text({ limit: '200mb' }));
+app.use(router);
+app.use('/uploads', express.static('uploads'));
 app.get('/',function(req,res){
     //console.log('express route called')
     //res.write('Welcome to Job portal')

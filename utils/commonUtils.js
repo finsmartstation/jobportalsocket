@@ -46,10 +46,50 @@ function check_same_user_exist(user_id,arr_data){
     });
 }
 
+function change_data_format(inputDate) {
+    // Create a Date object from the input string
+    const dateObject = new Date(inputDate);
+  
+    // Check if the input date is valid
+    if (isNaN(dateObject.getTime())) {
+      return "Invalid Date";
+    }
+  
+    // Get month in full name format
+    const monthName = dateObject.toLocaleString('en-US', { month: 'short' });
+  
+    // Get year
+    const year = dateObject.getFullYear();
+  
+    // Format the result
+    const formattedDate = `${monthName} ${year}`;
+  
+    return formattedDate;
+  }
+
+  function getRandomUniqueFiveDigitCode() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+  
+    while (code.length < 5) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      const randomChar = characters.charAt(randomIndex);
+  
+      // Ensure the character is not already in the code
+      if (!code.includes(randomChar)) {
+        code += randomChar;
+      }
+    }
+  
+    return code;
+  }
+
 module.exports={
     current_datetime,
     current_date,
     check_same_user_and_room_exist,
     createRoom,
-    check_same_user_exist
+    check_same_user_exist,
+    change_data_format,
+    getRandomUniqueFiveDigitCode
 }
