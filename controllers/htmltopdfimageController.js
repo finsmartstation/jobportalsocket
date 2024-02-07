@@ -1,7 +1,7 @@
 const nodeHtmlToImage = require('node-html-to-image');
 const PuppeteerHTMLPDF = require('puppeteer-html-pdf');
 const pdf2img = require('pdf-img-convert');
-const fs = require('fs');
+const fs = require('fs').promises;
 const env=require('dotenv').config();
 const baseURLProfilePic=process.env.PROFILEPICBASEURL;
 const queries=require('../models/queries/queries');
@@ -308,6 +308,7 @@ async function generatePdfAndImage(req,res){
     try{
         //set data to templates
         var body=req.body ? req.body : {}; 
+        var response_data=[];
         console.log('body',body, typeof(body), Object.keys(body).length)
         if(typeof(body)=='object' && Object.keys(body).length>0){
             var user_id=body.user_id ? body.user_id : '';
@@ -332,9 +333,11 @@ async function generatePdfAndImage(req,res){
             var education_flag_status=false;
             var language_flag_status=false;
             var additional_feature_flag_status=false;
+            var objective_flag_status=false;
             console.log(skill)
             if(profile_pic!=''){
                 profile_pic=baseURLProfilePic+profile_pic;
+                profile_flag_status=true;
             }
             if(skill.length>0){
                 skill_flag_status=true;
@@ -354,40 +357,87 @@ async function generatePdfAndImage(req,res){
             if(additional_feature.length>0){
                 additional_feature_flag_status=true;
             }
+            if(objective!=''){
+                objective_flag_status=true;
+            }
             var check_user_data=await queries.checkUserData(user_id,access_token)
             if(check_user_data.length>0){
                 var contact_number=check_user_data[0].country_code+check_user_data[0].phone;
-                var template_1=await template1(username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
-                console.log(template_1)
-                var code=await utils.getRandomUniqueFiveDigitCode();
-                var file_name='uploads/template1_'+user_id+code+'.pdf';
-                var htmltopdf=await convertHtmlToPdf(file_name,template_1);
-                console.log(htmltopdf)
-                if(htmltopdf){
-                    var pdftoimage=await convertPdfToImage(user_id,file_name);
-                    console.log('pdf to image ',pdftoimage);
+                //background: #67D6E0;
+                
+                var color_code=['#596977','#03A9F4','#67D6E0','#5E6A75'];
+                var color_variants=[];
+                // for(var i=0; i<color_code.length; i++){
+                //     console.log(color_code[i])
+                //     var template_1=await template1(color_code[i],username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
+                //     console.log(template_1)
+                //     var code=await utils.getRandomUniqueFiveDigitCode();
+                //     var file_name='uploads/template1_'+user_id+code+'.pdf';
+                //     var htmltopdf=await convertHtmlToPdf(file_name,template_1);
+                //     if(htmltopdf){
+                //         var pdftoimage=await convertPdfToImage(user_id,file_name);
+                //         console.log('pdf to image ',pdftoimage);
+                //         color_variants.push({
+                //             color: color_code[i],
+                //             peview_data: pdftoimage,
+                //             pdf: file_name
+                //         })
+                //     }
+                // }
+                var template1_res={
+                    template_id: "1",
+                    template_name:"one",
+                    template_url:"https://creativeapplab.in/job_portal/api/uploads/job_seeker/2/resume/FILE_20231213103548.png",
+                    color_variants: color_variants
                 }
-                // var template_2=await template2();
-                // console.log(template_2)
-                // var template_3=await template3();
-                // console.log(template_3)
+                response_data.push(template1_res);
+
+                //template 2
+                var template2_color_code=['#272727'];
+                var template2_color_variants=[];
+                for(var j=0; j<template2_color_code.length; j++){
+                    var template_2=await template2(template2_color_code[j],username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
+                    var template2_code=await utils.getRandomUniqueFiveDigitCode();
+                    var template2_file_name='uploads/template2_'+user_id+template2_code+'.pdf';
+                    var htmltopdf_template2=await convertHtmlToPdf(template2_file_name,template_2);
+                    if(htmltopdf_template2){
+                        var pdftoimage_template2=await convertPdfToImage(user_id,template2_file_name);
+                        template2_color_variants.push({
+                            color: template2_color_code[j],
+                            preview_data: pdftoimage_template2,
+                            pdf: template2_file_name
+                        })
+                    }
+                }
+
+                var template2_res={
+                    template_id: "2",
+                    template_name:"two",
+                    template_url:"https://creativeapplab.in/job_portal/api/uploads/job_seeker/2/resume/FILE_20231213103548.png",
+                    color_variants: template2_color_variants
+                }
+                response_data.push(template2_res);
+                
                 res.json({
                     status: true,
                     statuscode: 200,
-                    messsage: 'success'
+                    messsage: 'success',
+                    data: response_data
                 });
             }else{
                 res.json({
                     status: false,
                     statuscode: 200,
-                    messsage: 'No user data found'
+                    messsage: 'No user data found',
+                    data: []
                 });
             }
         }else{
             res.json({
                 status: false,
                 statuscode: 400,
-                message: 'Input data is missing'
+                message: 'Input data is missing',
+                data: []
             });
         }
     }catch(e){
@@ -395,12 +445,13 @@ async function generatePdfAndImage(req,res){
         res.json({
             status: false,
             statuscode: 400,
-            message: `Error occurs in generate pdf and image function ${e}`
+            message: `Error occurs in generate pdf and image function ${e}`,
+            data: []
         })
     }
 }
 
-async function template1(username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature){
+async function template1(color_code,username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature){
     var skill_section='';
     var certificate_section='';
     var experience_section='';
@@ -575,7 +626,7 @@ async function template1(username,profile_flag_status,profile_pic,address,email,
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
                 body{font-size:14px}
-                .sidePane{width: calc(188px * 1.4); background: #596977; color: #fff;}
+                .sidePane{width: calc(188px * 1.4); background: ${color_code}; color: #fff;}
                 h2{font-size: 18px; font-weight: 700; }
                 h3 { font-size: 16px;font-weight: 700;}
                 h4{font-size: 14px;}
@@ -673,8 +724,307 @@ async function template1(username,profile_flag_status,profile_pic,address,email,
     return html_opening+html_closing;
 }
 
-async function template2(){
-    return 'template2 data';
+async function template2(color_code,username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature){
+    var skill_section='';
+    var certificate_section='';
+    var experience_section='';
+    var education_section='';
+    var language_section='';
+    var profile_pic_tag='';
+    var current_position='';
+    var additional_feature_section='';
+    var objective_section='';
+    console.log(profile_pic,profile_flag_status);
+    
+    if(profile_flag_status){
+        profile_pic_tag=`<img
+        alt="profile"
+        class="avatar"
+        src="${profile_pic}"
+      />`
+    }
+
+    if(objective_flag_status){
+         objective_section=objective_section+'<section>';
+         objective_section=objective_section+'<h2 class="">Objective</h2>';
+         objective_section=objective_section+'<p>'+objective+'</p>';
+         objective_section=objective_section+'</section>';
+    }
+
+    if(experience_flag_status){
+        experience_section=experience_section+'<section>';
+        experience_section=experience_section+'<h2 class="mb-3">Experience</h2>';
+        experience=experience.reverse();
+        for(var experience_i=0; experience_i<experience.length; experience_i++){
+            var start_date=experience[experience_i].start_date ? experience[experience_i].start_date : '';
+            var end_date=experience[experience_i].end_date ? experience[experience_i].end_date : '';
+            var date_status=false;
+            if(start_date!='0000-00-00' && start_date!=''){
+                date_status=true;
+                start_date=await utils.change_data_format(start_date);
+            }
+            if(date_status){
+                if(end_date!='0000-00-00' && end_date!=''){
+                    end_date=await utils.change_data_format(end_date);
+                }else{
+                    end_date='Present'; 
+                    current_position=experience[experience_i].position;
+                }
+            }
+            if(experience_i==0){
+                experience_section=experience_section+'<div>';
+            }else{
+                experience_section=experience_section+'<div class="mt-4">';
+            }
+            var responsibilities=experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities : [];
+            
+            experience_section=experience_section+'<h4 class="black">'+experience[experience_i].company_name+'</h4>';
+            experience_section=experience_section+'<p class="black mt-0" style="margin-bottom: 0.2rem !important">'+experience[experience_i].position+'</p>';
+            experience_section=experience_section+'<p>'+start_date+' '+end_date+'</p>';
+
+            if(responsibilities.length>0){
+                experience_section=experience_section+'<ul>'; 
+                for(var responsibility_i=0; responsibility_i<responsibilities.length; responsibility_i++){
+                    experience_section=experience_section+'<li>'+responsibilities[responsibility_i]+'</li>';
+                }
+                experience_section=experience_section+'</ul>'; 
+            }
+        }
+        experience_section=experience_section+'</section>';
+    }
+
+    if(education_flag_status){
+        education_section=education_section+'<section>';
+        education_section=education_section+'<h2 class="mb-3">Education</h2>';
+        for(var education_i=0; education_i<education.length; education_i++){
+            education_section=education_section+'<div><h4 class="black">'+education[education_i].institution+'</h4><p>'+education[education_i].course_name+', '+education[education_i].academic_year+'</p></div>';
+        }
+        education_section=education_section+'</section>';
+    }
+
+    if(certificate_flag_status){
+        certificate_section=certificate_section+'<section>';
+        certificate_section=certificate_section+'<section class="mt-2"><h2 style="color: black">Certifications</h2></section>';
+        for(var certificate_i=0; certificate_i<certificate.length; certificate_i++){
+            certificate_section=certificate_section+'<section class="mt-3"><p class="details">'+certificate[certificate_i].document_type+'</p></section>';
+        }
+        certificate_section=certificate_section+'<section>';
+    }
+
+    if(skill_flag_status){
+        skill_section=skill_section+'<section class="mt-5"><h2 style="color: black">Skills</h2></section>';
+        for(var skill_i=0; skill_i<skill.length; skill_i++){
+            skill_section=skill_section+'<section class="mt-3">';
+            skill_section=skill_section+'<h4 class="title mt-3 details p">'+skill[skill_i].skill+'</h4>';
+            if(skill[skill_i].rating_status==1){
+                skill_section=skill_section+'<div class="w3-light-grey w3-xxlarge" style="width: 100%">';
+                skill_section=skill_section+'<div class="w3-container w3-black" style="width: '+skill[skill_i].rating*20+'%"></div>';
+                skill_section=skill_section+'</div>';
+            }
+            skill_section=skill_section+'</section">';
+        }
+    }
+
+    if(language_flag_status){
+        language_section=language_section+'<section>';
+        language_section=language_section+'<h2 class="mb-3 mt-5" style="color: black">Language</h2>';
+        language_section=language_section+'</section>';
+        for(var language_i=0; language_i<language.length; language_i++){
+            language_section=language_section+'<section class="mt-3">';
+            language_section=language_section+'<h4 class="title mt-3 details">Principle</h4>';
+            if(language[language_i].rating_status==1){
+                language_section=language_section+'<div class="w3-light-grey w3-tiny" style="width: 100%">';
+                language_section=language_section+'<div class="w3-container w3-black" style="width: '+language[language_i].rating*20+'%"></div>';
+                language_section=language_section+'</div>';
+            }
+            language_section=language_section+'</section>';
+        }
+    }
+
+    var html_opening=`<!DOCTYPE html>
+    <html lang="en" data-bs-theme="auto">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="" />
+        <meta name="author" content="CV" />
+        <meta name="generator" content="CV" />
+        <title>CV Template</title>
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+          crossorigin="anonymous"
+        />
+        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css" />
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+          integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+          crossorigin="anonymous"
+        />
+    
+        <!-- Custom styles for this template -->
+        <!-- <link href="custom.css" rel="stylesheet" /> -->
+    
+        <style>
+          @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
+          body {
+            font-size: 14px;
+          }
+          .sidePane {
+            width: calc(188px * 1.4);
+            color: black;
+          }
+          .name_sec {
+            color: aliceblue;
+            margin-top: 5%;
+          }
+          h2 {
+            font-size: 23px;
+            font-weight: 700;
+            margin-top: 2%;
+            color: rgb(255, 255, 255);
+            text-decoration: underline;
+          }
+          h3 {
+            font-size: 16px;
+            font-weight: 700;
+          }
+          h4 {
+            font-size: 14px;
+            font-weight: 700;
+          }
+          h5 {
+            font-size: 12px;
+          }
+          .ms-2 {
+            font-size: larger;
+            color: rgb(191 180 180);
+          }
+          .sidePane .details {
+            color: rgb(0, 0, 0);
+          }
+          .avatar {
+            width: 86px;
+            height: 86px;
+            border-radius: 100%;
+            overflow: hidden;
+            margin-left: 22%;
+          }
+          .w3-black {
+            height: 3px;
+          }
+    
+          .checked {
+            color: black;
+            font-size: 20px;
+          }
+          .unchecked {
+            font-size: 20px;
+            color: black;
+          }
+          section[role="content"] {
+            color: rgba(0, 0, 0, 0.7);
+          }
+          section[role="content"] h2 {
+            color: rgba(0, 0, 0, 1);
+          }
+          .black {
+            color: #000;
+          }
+          section[role="content"] .checked {
+            color: #000000;
+          }
+          section[role="content"] .unchecked {
+            color: black;
+          }
+    
+          .head_div {
+            background-color: #272727;
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
+          }
+    
+          /*@media print {
+            body {
+              font-size: 12px;
+            }
+            .shadow-lg.my-4 {
+              box-shadow: none;
+              margin: 0 !important;
+            }
+          }
+          @page {
+            size: A4;
+            margin-left: 0px;
+            margin-right: 0px;
+            margin-top: 0px;
+            margin-bottom: 0px;
+            margin: 0;
+            -webkit-print-color-adjust: exact;
+          }*/
+        </style>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+        />
+      </head>
+      <body>
+        <main>
+          <div class="container shadow-none my-0" style="max-width: 860px">
+            <div class="head_div">
+              <div class="d-flex align-items-center justify-content-center">
+                <section class="name_sec">
+                  ${profile_pic_tag}
+                  <div class="mt-2">
+                    <h2 style="text-decoration: none">${username}</h2>
+                    <p class="details ms-2">Product Designer</p>
+                  </div>
+                </section>
+              </div>
+              <hr style="color: aliceblue" />
+              <section
+            role="main"
+            class="d-flex align-items-center justify-content-center mb-2"
+          >
+            <p class="details" style="color: rgb(170, 171, 172)">
+              <i class="fa fa-home"></i>
+              ${address}
+            </p>
+            &nbsp; &nbsp;
+            <p class="details" style="color: rgb(170, 171, 172)">
+              <i class="fa fa-phone"></i> ${contact_number}
+            </p>
+            &nbsp; &nbsp; 
+            <p class="details" style="color: rgb(170, 171, 172)">
+              <i class="fa fa-envelope"></i> ${email}
+            </p>
+          </section>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="p-5 my-3">
+                    <section role="content">
+                        ${objective_section}
+                        ${experience_section}
+                        ${education_section}
+                    <section>
+                    </div>
+          </div>
+          <div class="col-4 sidePane">
+          <div class="p-5 my-3">
+          <section role="main">
+                ${certificate_section}
+                ${skill_section}
+                ${language_section}
+              </section>
+              
+          </div></div>`;
+    var html_closing=`</div></div></main>
+                        </body>
+                    </html>`;
+    return html_opening+html_closing;
 }
 
 async function template3(){
@@ -737,23 +1087,21 @@ async function convertHtmlToPdf(file_name,template){
 }
 
 async function convertPdfToImage(user_id,file_path){
-    var outputImages = pdf2img.convert('./'+file_path);
 
-    outputImages.then(async function(outputImages) {
-    console.log(outputImages)
-    for (i = 0; i < outputImages.length; i++){
-        var code=await utils.getRandomUniqueFiveDigitCode();
-        var file_name="uploads/IMG_"+user_id+i+code+".png";
-        await fs.writeFile(file_name, outputImages[i], function (error) {
-            if (error) { 
-                console.error("Error: " + error); 
-                return false;
-            }else{
-                return true;
-            }
-        });
-    }
+    var images=[];
+    var outputImages = pdf2img.convert('./'+file_path);
+    console.log('output',outputImages)
+    await outputImages.then(async function(outputImages) {
+        console.log(outputImages)
+        for (i = 0; i < outputImages.length; i++){
+            var code=await utils.getRandomUniqueFiveDigitCode();
+            var file_name="uploads/IMG_"+user_id+i+code+".png";
+            await fs.writeFile(file_name, outputImages[i]);
+            images.push(file_name);
+        }
     });
+    console.log(images)
+    return images;
 }
 
 
