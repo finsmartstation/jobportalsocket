@@ -4,6 +4,7 @@ const pdf2img = require('pdf-img-convert');
 const fs = require('fs').promises;
 const env=require('dotenv').config();
 const baseURLProfilePic=process.env.PROFILEPICBASEURL;
+const appURL=process.env.APPURL;
 const queries=require('../models/queries/queries');
 const utils=require('../utils/commonUtils');
 async function generateImage(req,res){
@@ -367,23 +368,23 @@ async function generatePdfAndImage(req,res){
                 
                 var color_code=['#596977','#03A9F4','#67D6E0','#5E6A75'];
                 var color_variants=[];
-                // for(var i=0; i<color_code.length; i++){
-                //     console.log(color_code[i])
-                //     var template_1=await template1(color_code[i],username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
-                //     console.log(template_1)
-                //     var code=await utils.getRandomUniqueFiveDigitCode();
-                //     var file_name='uploads/template1_'+user_id+code+'.pdf';
-                //     var htmltopdf=await convertHtmlToPdf(file_name,template_1);
-                //     if(htmltopdf){
-                //         var pdftoimage=await convertPdfToImage(user_id,file_name);
-                //         console.log('pdf to image ',pdftoimage);
-                //         color_variants.push({
-                //             color: color_code[i],
-                //             peview_data: pdftoimage,
-                //             pdf: file_name
-                //         })
-                //     }
-                // }
+                for(var i=0; i<color_code.length; i++){
+                    console.log(color_code[i])
+                    var template_1=await template1(color_code[i],username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
+                    console.log(template_1)
+                    var code=await utils.getRandomUniqueFiveDigitCode();
+                    var file_name='uploads/template1_'+user_id+code+'.pdf';
+                    var htmltopdf=await convertHtmlToPdf(file_name,template_1);
+                    if(htmltopdf){
+                        var pdftoimage=await convertPdfToImage(user_id,file_name);
+                        console.log('pdf to image ',pdftoimage);
+                        color_variants.push({
+                            color: color_code[i],
+                            peview_data: pdftoimage,
+                            pdf: appURL+file_name
+                        })
+                    }
+                }
                 var template1_res={
                     template_id: "1",
                     template_name:"one",
@@ -405,7 +406,7 @@ async function generatePdfAndImage(req,res){
                         template2_color_variants.push({
                             color: template2_color_code[j],
                             preview_data: pdftoimage_template2,
-                            pdf: template2_file_name
+                            pdf: appURL+template2_file_name
                         })
                     }
                 }
@@ -417,6 +418,32 @@ async function generatePdfAndImage(req,res){
                     color_variants: template2_color_variants
                 }
                 response_data.push(template2_res);
+
+                //template 3
+                var template3_color_code=[''];
+                var template3_color_variants=[];
+                for(var k=0; k<template3_color_code.length; k++){
+                    var template_3=await template3(template3_color_code[j],username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
+                    var template3_code=await utils.getRandomUniqueFiveDigitCode();
+                    var template3_file_name='uploads/template2_'+user_id+template3_code+'.pdf';
+                    var htmltopdf_template3=await convertHtmlToPdf(template3_file_name,template_3);
+                    if(htmltopdf_template3){
+                        var pdftoimage_template3=await convertPdfToImage(user_id,template3_file_name);
+                        template3_color_variants.push({
+                            color: template3_color_code[j],
+                            preview_data: pdftoimage_template3,
+                            pdf: appURL+template3_file_name
+                        })
+                    }
+                }
+
+                var template3_res={
+                    template_id: "3",
+                    template_name:"three",
+                    template_url:"https://creativeapplab.in/job_portal/api/uploads/job_seeker/2/resume/FILE_20231213103548.png",
+                    color_variants: template3_color_variants
+                }
+                response_data.push(template3_res);
                 
                 res.json({
                     status: true,
@@ -841,6 +868,17 @@ async function template2(color_code,username,profile_flag_status,profile_pic,add
         }
     }
 
+    if(additional_feature_flag_status){
+        for(var additional_feature_i=0; additional_feature_i<additional_feature.length; additional_feature_i++){
+            if(additional_feature[additional_feature_i].show_status==1){
+                additional_feature_section=additional_feature_section+'<section>'
+                additional_feature_section=additional_feature_section+'<section class="mt-2"><h2 style="color: black">'+additional_feature[additional_feature_i].type+'</h2></section>';
+                additional_feature_section=additional_feature_section+'<section class="mt-3"><p class="details">'+additional_feature[additional_feature_i].type_description+'</p></section>'
+                additional_feature_section=additional_feature_section+'</section>'
+            }
+        }
+    }
+
     var html_opening=`<!DOCTYPE html>
     <html lang="en" data-bs-theme="auto">
       <head>
@@ -979,7 +1017,7 @@ async function template2(color_code,username,profile_flag_status,profile_pic,add
                   ${profile_pic_tag}
                   <div class="mt-2">
                     <h2 style="text-decoration: none">${username}</h2>
-                    <p class="details ms-2">Product Designer</p>
+                    <p class="details ms-2">${current_position}</p>
                   </div>
                 </section>
               </div>
@@ -1009,6 +1047,7 @@ async function template2(color_code,username,profile_flag_status,profile_pic,add
                         ${objective_section}
                         ${experience_section}
                         ${education_section}
+                        ${additional_feature_section}
                     <section>
                     </div>
           </div>
@@ -1027,8 +1066,319 @@ async function template2(color_code,username,profile_flag_status,profile_pic,add
     return html_opening+html_closing;
 }
 
-async function template3(){
-    return 'template3 data';
+
+async function template3(color_code,username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature){
+    var skill_section='';
+    var certificate_section='';
+    var experience_section='';
+    var education_section='';
+    var language_section='';
+    var profile_pic_tag='';
+    var current_position='';
+    var additional_feature_section='';
+    var objective_section='';
+
+    if(profile_flag_status){
+        profile_pic_tag=profile_pic_tag+'<div class="avatar mb-3 mt-1">';
+        profile_pic_tag=profile_pic_tag+'<img alt="profile" class="img-fluid" src="'+profile_pic+'">';
+        profile_pic_tag=profile_pic_tag+'</div>';
+    }
+
+    if(objective_flag_status){
+        objective_section=objective_section+'<section><h2 style=" margin-top: 1% !important;">Objective</h2>';
+        objective_section=objective_section+'<p>'+objective+'</p>';
+        objective_section=objective_section+'</section>';
+    }
+
+    if(experience_flag_status){
+        experience_section=experience_section+'<section>';
+        experience_section=experience_section+'<h2 class="mb-2 mt-4">Experience</h2>';
+        for(var experience_i=0; experience_i<experience.length; experience_i++){
+            var start_date=experience[experience_i].start_date ? experience[experience_i].start_date : '';
+            var end_date=experience[experience_i].end_date ? experience[experience_i].end_date : '';
+            var date_status=false;
+            if(start_date!='0000-00-00' && start_date!=''){
+                date_status=true;
+                start_date=await utils.change_data_format(start_date);
+            }
+            if(date_status){
+                if(end_date!='0000-00-00' && end_date!=''){
+                    end_date=await utils.change_data_format(end_date);
+                }else{
+                    end_date='Present'; 
+                    current_position=experience[experience_i].position;
+                }
+            }
+            if(experience_i==0){
+                experience_section=experience_section+'<div>';
+            }else{
+                experience_section=experience_section+'<div class="mt-4">';
+            }
+            var responsibilities=experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities : [];
+            experience_section=experience_section+'<div>';
+            experience_section=experience_section+'<h4 class="black">'+experience[experience_i].company_name+'</h4>';
+            experience_section=experience_section+'<span> '+experience[experience_i].position+'</span><br>';
+            experience_section=experience_section+'<span class="date">'+start_date+' - '+end_date+'</span>';
+            if(responsibilities.length>0){
+                experience_section=experience_section+'<ul>';
+                for(var responsibility_i=0; responsibility_i<responsibilities.length; responsibility_i++){
+                    experience_section=experience_section+'<li>'+responsibilities[responsibility_i]+'</li>';
+                }
+                experience_section=experience_section+'</ul>';
+            }
+            experience_section=experience_section+'</div>';
+        }
+        experience_section=experience_section+'</section>';
+    }
+
+    if(education_flag_status){
+        education_section=education_section+'<section>';
+        education_section=education_section+'<h2 class="mb-1 ">Education</h2>';
+        for(var education_i=0; education_i<education.length; education_i++){
+            education_section=education_section+'<div>';
+            education_section=education_section+'<h4 class="black ">'+education[education_i].institution+'</h4>';
+            education_section=education_section+'<p>'+education[education_i].course_name+', '+education[education_i].academic_year+'</p>';
+            education_section=education_section+'</div>';
+        }
+        education_section=education_section+'</section>';
+    }
+
+    if(certificate_flag_status){
+        certificate_section=certificate_section+'<section role="main">';
+        certificate_section=certificate_section+'<section class="mt-4">';
+        certificate_section=certificate_section+'<h2>Certifications</h2>';
+        certificate_section=certificate_section+'</section>';
+        for(var certificate_i=0; certificate_i<certificate.length; certificate_i++){
+            certificate_section=certificate_section+'<section class="mt-1">';
+            certificate_section=certificate_section+'<p class="details">'+certificate[certificate_i].document_type+'</p>';
+            certificate_section=certificate_section+'</section>';
+        }
+        certificate_section=certificate_section+'</section>';
+    }
+
+    if(skill_flag_status){
+        skill_section=skill_section+'<section role="main">';
+        skill_section=skill_section+'<section class="mt-4">';
+        skill_section=skill_section+'<h2>Skills</h2>';
+        skill_section=skill_section+'</section>';
+        for(var skill_i=0; skill_i<skill.length; skill_i++){
+            skill_section=skill_section+'<section class="mt-3">';
+            skill_section=skill_section+'<h4 class="title mt-3 details p">'+skill[skill_i].skill+'</h4>';
+            if(skill[skill_i].rating_status==1){
+                skill_section=skill_section+'<div class="w3-light-grey w3-large " style="width: 100%;">';
+                skill_section=skill_section+'<div class="w3-container w3-black" style="width: '+skill[skill_i].rating*20+'%; height: 5px;"></div>';
+                skill_section=skill_section+'</div>';
+            }
+            skill_section=skill_section+'</section>';
+        }
+        skill_section=skill_section+'</section>';
+    }
+
+    if(language_flag_status){
+        language_section=language_section+'<section role="main">';
+        language_section=language_section+'<h2 class="mb-3 mt-5">Language</h2>';
+        for(var language_i=0; language_i<language.length; language_i++){
+            if(language_i==0){
+                language_section=language_section+'<section class="mt-0">';
+            }else{
+                language_section=language_section+'<section class="mt-3">';
+            }
+                // <h4 class="title mt-3 details">Adobe XD</h4>
+                // <div class="w3-light-grey w3-large " style="width: 100%;">
+                //     <div class="w3-container w3-black" style="width: 50%; height: 5px;"></div>
+                // </div>
+            language_section=language_section+'<h4 class="title mt-3 details">'+language[language_i].language+'</h4>';
+            if(language[language_i].rating_status==1){
+                language_section=language_section+'<div class="w3-light-grey w3-large" style="width: 100%;">';
+                language_section=language_section+'<div class="w3-container w3-black" style="width: '+language[language_i].rating*20+'%; height: 5px;"></div>';
+                language_section=language_section+'</div>';
+            }
+            language_section=language_section+'</section>';
+        }
+        language_section=language_section+'</section>';
+    }
+
+    if(additional_feature_flag_status){
+        additional_feature_section=additional_feature_section+'<section>';
+        
+        for(var additional_feature_i=0; additional_feature_i<additional_feature.length; additional_feature_i++){
+            if(additional_feature[additional_feature_i].show_status==1){
+                additional_feature_section=additional_feature_section+'<h2 class="mb-1 ">'+additional_feature[additional_feature_i].type+'</h2>';
+                additional_feature_section=additional_feature_section+'<p>'+additional_feature[additional_feature_i].type_description+'</p>';
+            }
+            
+        }
+        additional_feature_section=additional_feature_section+'</section>';
+    }
+
+    var html_opening=`<!doctype html>
+                      <html lang="en" data-bs-theme="auto">
+                        <head>
+                        <meta charset="utf-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1">
+                        <meta name="description" content="">
+                        <meta name="author" content="CV">
+                        <meta name="generator" content="CV">
+                        <title>CV Template</title>
+                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+                        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+                        <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+                            body {
+                                font-size: 14px;
+                            }
+                            .sidePane {
+                                width: calc(188px * 1.4);
+                                background: linear-gradient(
+                                rgba(248, 252, 3, 0.5) -2%,
+                                rgba(255, 255, 255, 0) 10%,
+                                white 7%,
+                                white 83%,
+                                rgba(255, 255, 255, 0) 76%,
+                                rgba(135, 206, 235, 0.5) 100%
+                                );
+                                color: black;
+                            }
+                            .name_sec {
+                                display: flex;
+                                align-items: center;
+                            }
+                            h2 {
+                                font-size: 19px;
+                                font-weight: 700;
+                                margin-top: 5%;
+                            }
+                            h3 {
+                                font-size: 16px;
+                                font-weight: 700;
+                            }
+                            h4 {
+                                font-size: 16px;
+                                font-weight: 700;
+                            }
+                            h5 {
+                                font-size: 12px;
+                            }
+                            span {
+                                color: black;
+                            }
+                            .date {
+                                font-size: 12px;
+                                color: rgba(112, 112, 112, 0.87);
+                            }
+                            li {
+                                color: rgba(112, 112, 112, 0.87);
+                            }
+                            .sidePane .details {
+                                color: rgba(5, 5, 5, 0.7);
+                                font-weight: normal;
+                            }
+                            .avatar {
+                                width: 86px;
+                                height: 86px;
+                                display: inline-flex;
+                                border-radius: 100%;
+                                overflow: hidden;
+                            }
+                            .checked {
+                                color: black;
+                                font-size: 20px;
+                            }
+                            .unchecked {
+                                font-size: 20px;
+                                color: black;
+                            }
+                            section[role="content"] {
+                                color: rgba(0, 0, 0, 0.7);
+                            }
+                            section[role="content"] h2 {
+                                color: rgba(0, 0, 0, 1);
+                            }
+                            .black {
+                                color: #000;
+                            }
+                            section[role="content"] .checked {
+                                color: #768491;
+                            }
+                            section[role="content"] .unchecked {
+                                color: black;
+                            }
+                            
+                            /*@media print {
+                                body {
+                                font-size: 12px;
+                                }
+                                .shadow-lg.my-4 {
+                                box-shadow: none;
+                                margin: 0 !important;
+                                }
+                            }
+                            @page {
+                                size: A4;
+                                margin-left: 0px;
+                                margin-right: 0px;
+                                margin-top: 0px;
+                                margin-bottom: 0px;
+                                margin: 0;
+                                -webkit-print-color-adjust: exact;
+                            }*/
+              
+                        </style>
+                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">  
+                    </head>
+                    <body>
+                        <main>
+                    
+                            <div class="container shadow-none my-0" style="max-width: 860px;">
+                            <div class="row">
+                            <div class="col">
+                                <div class="p-5 my-3">
+                                    <section class="name_sec">
+                                        ${profile_pic_tag}
+                                        <div class="ms-3">
+                                            <h2>${username}</h2>
+                                        <p class="details">${current_position}</p>
+                                        </div>
+                                    </section>
+
+                                    <section role="content">
+                                        ${objective_section}
+                                        ${experience_section}
+                                        ${education_section}
+                                        ${additional_feature_section}
+                                    </section>
+
+                                </div>
+                            </div>
+                            <div class="col-3 sidePane">
+                                <div class="p-5 my-3" style=" margin-top: 30% !important">
+                                    <section role="main ">
+                                        <section class="mt-5">
+                                            <h2>Details</h2>
+                                        </section>
+                                        <section class="mt-3">
+                                            <h4 class="title">Address</h4>
+                                            <p class="details" >${address}</p>
+                                        </section>
+                                        <section >
+                                            <h4 class="title">Phone</h4>
+                                            <p class="details">${contact_number}</p>
+                                        </section>
+                                        <section >
+                                            <h4 class="title ">Email</h4>
+                                            <span class="details">${email}</span>
+                                        </section>
+                                    </section>
+                                    ${certificate_section}
+                                    ${skill_section}
+                                    ${language_section}
+                                </div>
+                            </div>
+                    `;
+
+    var html_closing=`</div></div></main></body></html>`;
+    return html_opening+html_closing;
 }
 
 
@@ -1097,7 +1447,7 @@ async function convertPdfToImage(user_id,file_path){
             var code=await utils.getRandomUniqueFiveDigitCode();
             var file_name="uploads/IMG_"+user_id+i+code+".png";
             await fs.writeFile(file_name, outputImages[i]);
-            images.push(file_name);
+            images.push(appURL+file_name);
         }
     });
     console.log(images)
