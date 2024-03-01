@@ -306,6 +306,7 @@ async function generateImage(req,res){
 }
 
 async function generatePdfAndImage(req,res){
+    //{"user_id":"1","access_token":"13a761e10063f408f3c6c8622a156c38","template_id":"1","file_name":"","first_name":"gokul","last_name":"pandei","dob":"1998","gender":"male","country":"india","state":"maharastra","city":"Bhokardan","pincode":"431114","address":"ran nivas,house num:2089,Bhokardan","email":"gokul.1998@gmail.com","other_contact":"9876543210","profile_pic":"uploads/job_seeker/6/profilepic/FILE_20231122145934.png","disabled":"0","disability_type":"none","objective":"To secure a challenging position in a reputable organization to expand my learnings, knowledge, and skills. I want to succeed in a stimulating and challenging environment that will provide me with advancement opportunities. I want to excel in this field with hard work, perseverance and dedication. I want a highly rewarding career where I can use my skills and knowledge for organizational and personal growth.","education":[{"qualification":"btech","course_name":"Computer science and engineering","institution":"IIT DELHI","country":"india","cgpa":"8.8","academic_year":"2018-2022"}],"experience":[{"position":"software developer","company_name":"carestack","country":"indian","start_date":"2019-04-11","end_date":"2021-04-11","responsilbilities":["Designed safety-focused experiences for Riders and Drivers", "Physical space problem solving and it’s interaction with the digital", "Navigated organization to achieve operational improvements"],"document":"img(1).img"},{"position":"Senior software developer","company_name":"carestack","country":"indian","start_date":"2021-05-11","end_date":"0000-00-00","responsilbilities":["Designed safety-focused experiences for Riders and Drivers", "Physical space problem solving and it’s interaction with the digital", "Navigated organization to achieve operational improvements"],"document":"img(1).img"}],"skill":[{"skill":"Python","rating":"5","rating_status":"1"},{"skill":"Angular","rating":"3","rating_status":"1"},{"skill":"Php","rating":"4","rating_status":"1"}],"certificate":[{"document_type":"google uc design certificate","document_path":"certificate(1).img","year":"2020"},{"document_type":"google uc design data","document_path":"certificate(1).img","year":"2020"}],"language":[{"language":"English","rating":"5","rating_status":"1"},{"language":"Tamil","rating":"4","rating_status":"1"},{"language":"Malayalam","rating":"4","rating_status":"1"}],"additional_feature":[{"type":"Hobbies","type_description":"hjsb","icon":"icon1","show_status":"1","status":"1"},{"type":"Achievement","type_description":"Rank holder in UG","icon":"icon1","show_status":"1","status":"1"}]}
     try{
         //set data to templates
         var body=req.body ? req.body : {}; 
@@ -327,6 +328,7 @@ async function generatePdfAndImage(req,res){
             var education=body.education ? body.education : [];
             var language=body.language ? body.language : [];
             var additional_feature=body.additional_feature ? body.additional_feature : [];
+            var other_contact=body.other_contact ? body.other_contact : '';
             var profile_flag_status=false;
             var skill_flag_status=false;
             var certificate_flag_status=false;
@@ -370,7 +372,7 @@ async function generatePdfAndImage(req,res){
                 var color_variants=[];
                 for(var i=0; i<color_code.length; i++){
                     console.log(color_code[i])
-                    var template_1=await template1(color_code[i],username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
+                    var template_1=await template1(color_code[i],username,profile_flag_status,profile_pic,address,email,other_contact,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
                     console.log(template_1)
                     var code=await utils.getRandomUniqueFiveDigitCode();
                     var file_name='uploads/template1_'+user_id+code+'.pdf';
@@ -397,7 +399,7 @@ async function generatePdfAndImage(req,res){
                 var template2_color_code=['#272727'];
                 var template2_color_variants=[];
                 for(var j=0; j<template2_color_code.length; j++){
-                    var template_2=await template2(template2_color_code[j],username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
+                    var template_2=await template2(template2_color_code[j],username,profile_flag_status,profile_pic,address,email,other_contact,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
                     var template2_code=await utils.getRandomUniqueFiveDigitCode();
                     var template2_file_name='uploads/template2_'+user_id+template2_code+'.pdf';
                     var htmltopdf_template2=await convertHtmlToPdf(template2_file_name,template_2);
@@ -423,7 +425,7 @@ async function generatePdfAndImage(req,res){
                 var template3_color_code=[''];
                 var template3_color_variants=[];
                 for(var k=0; k<template3_color_code.length; k++){
-                    var template_3=await template3(template3_color_code[j],username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
+                    var template_3=await template3(template3_color_code[j],username,profile_flag_status,profile_pic,address,email,other_contact,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
                     var template3_code=await utils.getRandomUniqueFiveDigitCode();
                     var template3_file_name='uploads/template2_'+user_id+template3_code+'.pdf';
                     var htmltopdf_template3=await convertHtmlToPdf(template3_file_name,template_3);
@@ -478,7 +480,7 @@ async function generatePdfAndImage(req,res){
     }
 }
 
-async function template1(color_code,username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature){
+async function template1(color_code,username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature){
     var skill_section='';
     var certificate_section='';
     var experience_section='';
@@ -487,10 +489,18 @@ async function template1(color_code,username,profile_flag_status,profile_pic,add
     var profile_pic_tag='';
     var current_position='';
     var additional_feature_section='';
+    var objective_section='';
     if(profile_flag_status){
         profile_pic_tag=`<div class="avatar mb-3">
                             <img alt="profile" class="img-fluid" src="${profile_pic}"/>
                         </div>`;
+    }
+
+    if(objective_flag_status){
+        objective_section=objective_section+'<section>';
+        objective_section=objective_section+'<h2 class="mb-3">Objective</h2>';
+        objective_section=objective_section+'<p>'+objective+'</p>';
+        objective_section=objective_section+'</section>';
     }
     if(skill_flag_status){
         console.log(skill.length)
@@ -733,10 +743,7 @@ async function template1(color_code,username,profile_flag_status,profile_pic,add
                 <div class="col">
                     <div class="p-5 my-3">
                         <section role="content">
-                            <section>
-                                <h2 class="mb-3">Objective</h2>
-                                <p>${objective}</p>
-                            </section>
+                            ${objective_section}
                             ${experience_section}
                             ${education_section}
                             ${language_section}

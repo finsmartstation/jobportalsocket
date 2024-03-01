@@ -379,7 +379,7 @@ io.sockets.on('connection',async function(socket){
 
         socket.on("test_changes",async function(data){
             try{
-                io.sockets.in(socket.id).emit('test_changes',{status:true, statuscode:200, message: "last changes affected on 02-01-2024"});
+                io.sockets.in(socket.id).emit('test_changes',{status:true, statuscode:200, message: "last changes affected on 09-02-2024"});
             }catch(e){
                 console.error('Error in test change',e)
             }
