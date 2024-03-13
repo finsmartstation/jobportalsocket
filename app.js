@@ -252,24 +252,41 @@ io.sockets.on('connection',async function(socket){
                     var access_token=data.access_token ? data.access_token : '';
                     if(user_id!='' && access_token!=''){
                         var update_message_delivered= await messageController.messageDelivered(user_id,access_token);
-                        console.log('response',update_message_delivered)
+                        //console.log('response',update_message_delivered)
                         io.sockets.in(socket.id).emit('message_delivered',update_message_delivered[0])
                         var emit_data=update_message_delivered[1];
-                        console.log(emit_data)
+                        //console.log(emit_data)
                         if(emit_data.length>0){
                             for(var i=0; i<emit_data.length; i++){
-                                //emit to senter room and chat list
-                                //to emit all messages
-                                if(user_id!=emit_data[i].user_id){
-                                    var room_chat_list=await messageController.roomChatMessage(emit_data[i].user_id,user_id,emit_data[i].room,0,'');
-                                    //console.log('room response',room_chat_list);
-                                    io.sockets.in(emit_data[i].room+'_'+emit_data[i].user_id).emit('message',room_chat_list);
-                                    console.log(typeof emit_data[i].user_id)
-                                    var chat_list=await messageController.chatListResponseWithoutToken(emit_data[i].user_id);
-                                    io.sockets.in(emit_data[i].user_id.toString()).emit('chat_list',chat_list);
+                                //emit to delivered_listener
+                                var delivered_listner_response={
+                                    status: true,
+                                    status_code: 200,
+                                    message: "success",
+                                    room: emit_data[i].room.toString(),
+                                    ids: emit_data[i].ids
                                 }
-                            }
+                                //console.log(delivered_listner_response)
+                                io.sockets.in(emit_data[i].room+'_'+emit_data[i].user_id).emit('delivered_room_listener',delivered_listner_response);
+                                io.sockets.in(emit_data[i].user_id.toString()).emit('delivered_chat_list_listener',delivered_listner_response);
+                                var chat_list=await messageController.chatListResponseWithoutToken(emit_data[i].user_id);
+                                io.sockets.in(emit_data[i].user_id.toString()).emit('chat_list',chat_list);
+                            } 
                         }
+                        // if(emit_data.length>0){
+                        //     for(var i=0; i<emit_data.length; i++){
+                        //         //emit to senter room and chat list
+                        //         //to emit all messages
+                        //         if(user_id!=emit_data[i].user_id){
+                        //             var room_chat_list=await messageController.roomChatMessage(emit_data[i].user_id,user_id,emit_data[i].room,0,'');
+                        //             //console.log('room response',room_chat_list);
+                        //             io.sockets.in(emit_data[i].room+'_'+emit_data[i].user_id).emit('message',room_chat_list);
+                        //             console.log(typeof emit_data[i].user_id)
+                        //             var chat_list=await messageController.chatListResponseWithoutToken(emit_data[i].user_id);
+                        //             io.sockets.in(emit_data[i].user_id.toString()).emit('chat_list',chat_list);
+                        //         }
+                        //     }
+                        // }
                     }else{
                         io.sockets.in(socket.id).emit('message_delivered',{status: false, statuscode: 200, message: 'Data is empty'});   
                     }
@@ -290,11 +307,20 @@ io.sockets.on('connection',async function(socket){
                     var room=await roomController.createRoom(user_id,receiver_id);
                     if(user_id!='' && receiver_id!='' && room!=''){
                         var update_message_read=await messageController.messageRead(user_id,room);
+                        var read_ids=update_message_read.ids;
+                        console.log('read ids',read_ids)
+                        delete update_message_read.ids;
                         io.sockets.in(socket.id).emit('read',update_message_read); 
                         if(update_message_read.status){
                             //emit room_chat and chat_list to the receiver
-                            var room_chat_list=await messageController.roomChatMessage(receiver_id,user_id,room,0,'');
-                            io.sockets.in(room+'_'+receiver_id).emit('message',room_chat_list);
+                            //var room_chat_list=await messageController.roomChatMessage(receiver_id,user_id,room,0,'');
+                            var read_lister_response={
+                                status: true,
+                                statuscode: 200,
+                                message: "success",
+                                ids: read_ids
+                            }
+                            io.sockets.in(room+'_'+receiver_id).emit('read_listener',read_lister_response);
                             var chat_list=await messageController.chatListResponseWithoutToken(receiver_id);
                             //console.log(typeof receiver_id)
                             io.sockets.in(receiver_id).emit('chat_list',chat_list);
@@ -379,7 +405,7 @@ io.sockets.on('connection',async function(socket){
 
         socket.on("test_changes",async function(data){
             try{
-                io.sockets.in(socket.id).emit('test_changes',{status:true, statuscode:200, message: "last changes affected on 09-02-2024"});
+                io.sockets.in(socket.id).emit('test_changes',{status:true, statuscode:200, message: "last changes affected on 13-03-2024"});
             }catch(e){
                 console.error('Error in test change',e)
             }

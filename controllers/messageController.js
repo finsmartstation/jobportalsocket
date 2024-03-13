@@ -351,6 +351,7 @@ async function messageDelivered(user_id,access_token){
     if(check_user_data.length>0){
         var not_delivered_messages=await queries.notDeliveredMessages(user_id);
         console.log(not_delivered_messages);
+        
         if(not_delivered_messages.length>0){
             var ids='';
             var delivered_status_case='';
@@ -376,16 +377,19 @@ async function messageDelivered(user_id,access_token){
                     delivered_status_case=delivered_status_case+" when id='"+id+"' then '1'";
                     message_data_case=message_data_case+" when id='"+id+"' then '"+JSON.stringify(message_data)+"'";
                     //check same user and room already exist
-                    var check_same_user_and_room_exist=await utils.check_same_user_and_room_exist(not_delivered_messages[i].senter_id,not_delivered_messages[i].room,emit_data);
-                    console.log(check_same_user_and_room_exist)
-                    if(check_same_user_and_room_exist==false){
+                    //var check_same_user_and_room_exist=await utils.check_same_user_and_room_exist(not_delivered_messages[i].senter_id,not_delivered_messages[i].room,emit_data);
+                    //console.log(check_same_user_and_room_exist)
+                    //if(check_same_user_and_room_exist==false){
                         emit_data.push({
                             user_id: not_delivered_messages[i].senter_id,
-                            room: not_delivered_messages[i].room 
+                            room: not_delivered_messages[i].room,
+                            id: id
                         })
-                    }
+                    //}
                 }
             }
+            console.log(emit_data);
+            //exit ()
             //console.log(ids,delivered_status_case);
             ids=ids.replace(/(^,)|(,$)/g, "");
             //console.log(ids)
@@ -425,7 +429,11 @@ async function messageDelivered(user_id,access_token){
     }
     //console.log(response)
     response_data.push(response);
-    response_data.push(emit_data);
+    //format or group the ids in the => emit_data 
+    console.log(emit_data);
+    let group_data=await utils.grouped_delivered_room_data(emit_data);
+    console.log(group_data)
+    response_data.push(group_data);
     return response_data;
 }
 
@@ -433,6 +441,7 @@ async function messageRead(user_id,room){
     var response={};
     var notReadMessage=await queries.notReadMessage(user_id,room);
     var current_datetime= utils.current_datetime();
+    var id_values=[];
     console.log(notReadMessage);
     if(notReadMessage.length>0){
         var ids='';
@@ -451,6 +460,7 @@ async function messageRead(user_id,room){
                 }
             }
             if(update_read_status){
+                  id_values.push(id);
                   ids=ids+"'"+id+"',";  
                   read_status_case=read_status_case+" when id='"+id+"' then '1'";
                   read_datetime_case=read_datetime_case+" when id='"+id+"' then '"+current_datetime+"'";
@@ -470,27 +480,31 @@ async function messageRead(user_id,room){
                 response={
                     status: true,
                     statuscode: 200,
-                    message: 'Success'
+                    message: 'Success',
+                    ids: id_values
                 } 
             }else{
                 response={
                     status: false,
                     statuscode: 200,
-                    message: 'No message to read'
+                    message: 'No message to read',
+                    ids: id_values
                 } 
             }
         }else{
             response={
                 status: false,
                 statuscode: 200,
-                message: 'No message to read'
+                message: 'No message to read',
+                ids: id_values
             }   
         }
     }else{
         response={
             status: false,
             statuscode: 200,
-            message: 'No message to read'
+            message: 'No message to read',
+            ids: id_values
         }  
     }
     return response;

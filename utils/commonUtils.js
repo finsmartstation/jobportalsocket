@@ -84,6 +84,24 @@ function change_data_format(inputDate) {
     return code;
   }
 
+  function grouped_delivered_room_data(data){
+    const groupedConversations=data.reduce((groups, conversation)=>{
+      const key = `${conversation.room}_${conversation.user_id}`;
+      if (!groups[key]) {
+        groups[key] = {
+          user_id: conversation.user_id,
+          room: conversation.room,
+          ids: []
+        };
+      }
+
+      groups[key].ids.push(conversation.id);
+      return groups;
+    },{});
+    const resultArray = Object.values(groupedConversations);
+    return resultArray;
+  }
+
 module.exports={
     current_datetime,
     current_date,
@@ -91,5 +109,6 @@ module.exports={
     createRoom,
     check_same_user_exist,
     change_data_format,
-    getRandomUniqueFiveDigitCode
+    getRandomUniqueFiveDigitCode,
+    grouped_delivered_room_data
 }
