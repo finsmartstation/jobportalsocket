@@ -270,6 +270,19 @@ async function chatListResponse(user_id,access_token){
                     recent_chat_list[i].message='You unblocked this user';
                 }
             }
+            var message_status=0;
+            if(recent_chat_list[i].delivered_status==0){
+                //not delivered
+                message_status=0;
+            }else{
+                if(recent_chat_list[i].read_status==0){
+                    //delivered
+                    message_status=1;
+                }else{
+                    //read
+                    message_status=2;
+                }
+            }
             chat_list.push({
                 id: recent_chat_list[i].id.toString(),
                 datetime: recent_chat_list[i].created_datetime,
@@ -280,7 +293,9 @@ async function chatListResponse(user_id,access_token){
                 room: recent_chat_list[i].room.toString(),
                 message: recent_chat_list[i].message,
                 message_type: recent_chat_list[i].message_type,
-                unread_message: recent_chat_list[i].unread_message.toString()
+                unread_message: recent_chat_list[i].unread_message.toString(),
+                message_status: message_status.toString(),
+                type: recent_chat_list[i].type
             });
         }
         //console.log(chat_list)
@@ -318,6 +333,19 @@ async function chatListResponseWithoutToken(user_id){
                 recent_chat_list[i].message='You unblocked this user';
             }
         }
+        var message_status=0;
+        if(recent_chat_list[i].delivered_status==0){
+            //not delivered
+            message_status=0;
+        }else{
+            if(recent_chat_list[i].read_status==0){
+                //delivered
+                message_status=1;
+            }else{
+                //read
+                message_status=2;
+            }
+        }
         chat_list.push({
             id: recent_chat_list[i].id.toString(),
             datetime: recent_chat_list[i].created_datetime,
@@ -328,7 +356,9 @@ async function chatListResponseWithoutToken(user_id){
             room: recent_chat_list[i].room.toString(),
             message: recent_chat_list[i].message,
             message_type: recent_chat_list[i].message_type,
-            unread_message: recent_chat_list[i].unread_message.toString()
+            unread_message: recent_chat_list[i].unread_message.toString(),
+            message_status: message_status.toString(),
+            type: recent_chat_list[i].type
         });
     }
     //console.log(chat_list)
@@ -653,6 +683,18 @@ async function searchChatList(user_id,access_token,search){
             if(search_chat_list[i].profile_pic!=''){
                 profile_pic=baseURL+search_chat_list[i].profile_pic;
             }
+            if(search_chat_list[i].delivered_status==0){
+                //not delivered
+                message_status=0;
+            }else{
+                if(search_chat_list[i].read_status==0){
+                    //delivered
+                    message_status=1;
+                }else{
+                    //read
+                    message_status=2;
+                }
+            }
             chat_list.push({
                 id: search_chat_list[i].id.toString(),
                 datetime: search_chat_list[i].created_datetime,
@@ -663,7 +705,10 @@ async function searchChatList(user_id,access_token,search){
                 room: search_chat_list[i].room.toString(),
                 message: search_chat_list[i].message,
                 message_type: search_chat_list[i].message_type,
-                unread_message: search_chat_list[i].unread_message.toString()
+                unread_message: search_chat_list[i].unread_message.toString(),
+                type: search_chat_list[i].type,
+                message_status: message_status.toString(),
+                
             });
         }
         //get message
@@ -671,6 +716,7 @@ async function searchChatList(user_id,access_token,search){
         if(search!=''){
             search_message=await queries.searchMessage(user_id,search);
         }
+        console.log(search_message)
         console.log('search message',search_message.length);
         for(var j=0; j<search_message.length; j++){
             var user_profile_pic=baseURL+'uploads/default/profile.png';
