@@ -2501,6 +2501,114 @@ async function template7(color_code,username,profile_flag_status,profile_pic,add
     var current_position='';
     var additional_feature_section='';
     var objective_section='';
+    if(profile_flag_status){
+        profile_pic_tag=`<img src="${profile_pic}" class="profile-img" />`
+    }
+    
+    if(objective_flag_status){
+        objective_section=objective_section+`<tr>
+        <td class="label">Profile</td>
+        <td class="content">
+            ${objective}
+        </td>
+    </tr>`
+    }
+
+    if(experience_flag_status){
+        experience_section=experience_section+'<tr><td class="label">experience</td><td class="content">';
+        for(var experience_i=0; experience_i<experience.length; experience_i++){
+            var start_date=experience[experience_i].start_date ? experience[experience_i].start_date : '';
+            var end_date=experience[experience_i].end_date ? experience[experience_i].end_date : '';
+            var date_status=false;
+            if(start_date!='0000-00-00' && start_date!=''){
+                date_status=true;
+                start_date=await utils.change_data_format(start_date);
+            }
+            if(date_status){
+                if(end_date!='0000-00-00' && end_date!=''){
+                    end_date=await utils.change_data_format(end_date);
+                }else{
+                    end_date='Present'; 
+                    current_position=experience[experience_i].position;
+                }
+            }
+            experience_section=experience_section+'<div class="subblock"><h4>'+experience[experience_i].company_name+'</h4><h5>'+experience[experience_i].position+'</h5><h6>'+start_date+' - '+end_date+'</h6>';
+            var responsibilities=experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
+            if(responsibilities.length>0){
+                experience_section=experience_section+'<ul>';
+                for(var responsibility_i=0; responsibility_i<responsibilities.length; responsibility_i++){
+                    experience_section=experience_section+'<li>'+responsibilities[responsibility_i]+'</li>';
+                }
+                experience_section=experience_section+'</ul>';
+            }
+            experience_section=experience_section+'</div>';
+        }
+        experience_section=experience_section+'</td></tr>';
+    }
+
+    if(education_flag_status){
+        education_section=education_section+'<tr><td class="label">Education</td><td class="content">';
+        for(var education_i=0; education_i<education.length; education_i++){
+            education_section=education_section+'<div class="item"><h2>'+education[education_i].institution+'</h2><h3>'+education[education_i].course_name+', '+education[education_i].academic_year+'</h3></div>';
+        }
+        education_section=education_section+'</td></tr>';
+    }
+
+    if(skill_flag_status){
+        skill_section=skill_section+'<tr><td class="label">Skills</td><td class="content">';
+        for(var skill_i=0; skill_i<skill.length; skill_i++){
+            skill_section=skill_section+'<span class="pillow">'+skill[skill_i].skill+'</span>';
+        }
+        skill_section=skill_section+'</td></tr>';
+    }
+
+    if(language_flag_status){
+        language_section=language_section+'<tr><td class="label">Languages</td>';
+        var last_loop_iteration=language.length-1;
+        language_section=language_section+'<td class="content">';
+        for(var language_i=0; language_i<language.length; language_i++){
+            language_section=language_section+language[language_i].language;
+            if(language[language_i].rating_status==1){
+                var language_rating_symbol='';
+                if(language[language_i].rating==5){
+                    language_rating_symbol='A1';
+                }else if(language[language_i].rating==4){
+                    language_rating_symbol='A2';
+                }else if(language[language_i].rating==3){
+                    language_rating_symbol='A3';
+                }else if(language[language_i].rating==2){
+                    language_rating_symbol='A4';
+                }else if(language[language_i].rating==1){
+                    language_rating_symbol='A5';
+                }
+                language_section=language_section+': '+language_rating_symbol;
+            }
+            
+            if(language_i!=last_loop_iteration){
+                language_section=language_section+'<span class="seperator">| <span>';
+            }
+        }
+        language_section=language_section+'</td>';
+    }
+
+    if(certificate_flag_status){
+        certificate_section=certificate_section+'<tr><td class="label">CERTIFICATIONS</td><td class="content">';
+        for(var certificate_i=0; certificate_i<certificate.length; certificate_i++){
+            certificate_section=certificate_section+''+certificate[certificate_i].document_type;
+        }
+        certificate_section=certificate_section+'</td></tr>';
+    }
+
+    if(additional_feature_flag_status){
+        for(var additional_feature_i=0; additional_feature_i<additional_feature.length; additional_feature_i++){
+            if(additional_feature[additional_feature_i].show_status==1){
+                additional_feature_section=additional_feature_section+'<tr><td class="label">'+additional_feature[additional_feature_i].type+'</td>';
+                additional_feature_section=additional_feature_section+'<td class="content">'+additional_feature[additional_feature_i].type_description+'</td>';
+                additional_feature_section=additional_feature_section+'</td></tr>';
+            }
+        }
+    }
+
     var html_opening=`
     <!doctype html>
     <html lang="en">
@@ -2715,84 +2823,28 @@ async function template7(color_code,username,profile_flag_status,profile_pic,add
         <div class="wrapper">
             <div class="header">
                 <div class="profile-top">
-                    <img src="${appURL}uploads/images/template/dp.png" class="profile-img" />
-                    <h1>rick Tang</h1>
-                    <div class="designation">Product Designer</div>
+                    ${profile_pic_tag}
+                    <h1>${username}</h1>
+                    <div class="designation">${current_position}</div>
                 </div>
                 <table class="table-contact">
                     <tr>
-                        <td><img src="${appURL}uploads/images/template/Location.png" /><span>San Francisco, California</span></td>
-                        <td><img src="${appURL}uploads/images/template/Location.png" /><span>ricktang@gmail.com</span></td>
-                        <td><img src="${appURL}uploads/images/template/Location.png" /><span>(315) 802-8179</span></td>
+                        <td><img src="${appURL}uploads/images/template/Location.png" /><span>${address}</span></td>
+                        <td><img src="${appURL}uploads/images/template/Location.png" /><span>${email}</span></td>
+                        <td><img src="${appURL}uploads/images/template/Location.png" /><span>${contact_number}</span></td>
                     </tr>
                 </table>
             </div>`;
             var html_closing=`<div class="cv-body">
             <table class="content-table">
                 <tbody>
-                    <tr>
-                        <td class="label">Profile</td>
-                        <td class="content">
-                            UX/UI specialist focused on designing clean and functional projects across all platforms and 
-                            devices in response to specific briefs and problems, while always maintaining a unique look and feel.
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="label">experience</td>
-                        <td class="content">
-                            <div class="subblock">
-                                <h4>Uber</h4>
-                                <h5>Product Designer</h5>
-                                <h6>Mar 2015 - Present</h6>
-                                <ul>
-                                    <li>Designed safety-focused experiences for Riders and Drivers </li>
-                                    <li>Physical space problem solving and it’s interaction with the digital</li>
-                                    <li>Navigated organization to achieve operational improvements</li>
-                                </ul>
-                            </div>
-                            <div class="subblock">
-                                <h4>IFTTT </h4>
-                                <h5>Product Designer</h5>
-                                <h6>Dec 2013 - Mar 2015</h6>
-                                <ul>
-                                    <li>Product and system design for a complex product</li>
-                                    <li>Designed both consumer and developer products for IFTTT</li>
-                                    <li> Responsible for maintaining design across iOS, Android, and web</li>
-                                </ul>
-                            </div>
-                            <div class="subblock">
-                                <h4>Facebook</h4>
-                                <h5>Product Designer</h5>
-                                <h6>June 2013 - Sep 2013</h6>
-                                <ul>
-                                    <li>Designer and prototyped internal tools
-                                    <li>Redesigned Newsfeed curation experience for mobile</li>
-                                    <li>Redesigned Newsfeed curation experience for mobile</li>
-                                </ul>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="label">Education</td>
-                        <td class="content">  
-                            <div class="item">
-                                <h2>Brown University</h2>
-                                <h3>Interdisciplinary studies, Sep 2010 - May 2013</h3>
-                            </div>                          
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="label">Skills</td>
-                        <td class="content">
-                            <span class="pillow">Figma</span><span class="pillow">Sketch</span><span class="pillow">Photoshop</span><span class="pillow">Illustrator</span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="label">Languages</td>
-                        <td class="content">
-                            English: C2 <span class="seperator">|</span> Italian: B2
-                        </td>
-                    </tr>                    
+                    ${objective_section}
+                    ${experience_section}
+                    ${education_section}
+                    ${skill_section}
+                    ${language_section}   
+                    ${certificate_section} 
+                    ${additional_feature_section}           
                     <tr>
                         <td class="label">CERTIFICATIONS</td>
                         <td class="content">Google UX Design Certificate</td>
@@ -2806,6 +2858,12 @@ async function template7(color_code,username,profile_flag_status,profile_pic,add
 
 </html>`;
     return html_opening+html_closing;
+}
+
+async function template8(color_code,username,profile_flag_status,profile_pic,address,email,contact_number,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature){
+    var html=`
+    `
+    return html;
 }
 
 async function convertHtmlToImage(file_name,html_code){
@@ -2977,6 +3035,9 @@ async function savePdfAndDownload(req,res){
                         template_available_flag=true;
                     }else if(template_id==7){
                         html_code=await template7(color_code,username,profile_flag_status,profile_pic,address,email,other_contact,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
+                        template_available_flag=true;
+                    }else if(template_id==8){
+                        html_code=await template8(color_code,username,profile_flag_status,profile_pic,address,email,other_contact,skill_flag_status,skill,certificate_flag_status,certificate,objective_flag_status,objective,experience_flag_status,experience,education_flag_status,education,language_flag_status,language,additional_feature_flag_status,additional_feature);
                         template_available_flag=true;
                     }
                     if(template_available_flag){
