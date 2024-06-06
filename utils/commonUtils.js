@@ -67,6 +67,17 @@ function change_data_format(inputDate) {
     return formattedDate;
   }
 
+  function change_date_format_to_year(inputDate){
+    const dateObject = new Date(inputDate);
+    if (isNaN(dateObject.getTime())) {
+      return "Invalid Date";
+    }
+    const monthName = dateObject.toLocaleString('en-US', { month: 'short' });
+    const year = dateObject.getFullYear();
+    const formattedDate = `${year}`;
+    return formattedDate;
+  }
+
   function getRandomUniqueFiveDigitCode() {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
@@ -110,5 +121,6 @@ module.exports={
     check_same_user_exist,
     change_data_format,
     getRandomUniqueFiveDigitCode,
-    grouped_delivered_room_data
+    grouped_delivered_room_data,
+    change_date_format_to_year
 }
