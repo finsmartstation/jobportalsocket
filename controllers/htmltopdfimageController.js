@@ -432,6 +432,9 @@ async function generatePreviewPdfAndImage(req, res) {
                     } else if (template_id == 19) {
                         html_code = await template19(color_code, first_name, last_name, username, profile_flag_status, profile_pic, address, email, other_contact, skill_flag_status, skill, certificate_flag_status, certificate, objective_flag_status, objective, experience_flag_status, experience, education_flag_status, education, language_flag_status, language, additional_feature_flag_status, additional_feature);
                         template_available_flag = true;
+                    } else if (template_id == 20) {
+                        html_code = await template20(color_code, first_name, last_name, username, profile_flag_status, profile_pic, address, email, other_contact, skill_flag_status, skill, certificate_flag_status, certificate, objective_flag_status, objective, experience_flag_status, experience, education_flag_status, education, language_flag_status, language, additional_feature_flag_status, additional_feature);
+                        template_available_flag = true;
                     }
 
                     if (template_available_flag) {
@@ -6504,11 +6507,6 @@ async function template18(color_code, first_name, last_name, username, profile_f
                     <h4>${experience[experience_i].company_name}</h4>
                     <h5>${experience[experience_i].position}</h5>
                     <p>${start_date} - ${end_date}</p>
-                    <ul>
-                        <li>Designed safety-focused experiences for Riders and Drivers </li>
-                        <li>Physical space problem solving and it’s interaction with the digital </li>
-                        <li>Navigated organization to achieve operational improvements</li>
-                    </ul>
             `;
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if(responsibilities.length>0){
@@ -6771,6 +6769,192 @@ async function template18(color_code, first_name, last_name, username, profile_f
 }
 
 async function template19(color_code, first_name, last_name, username, profile_flag_status, profile_pic, address, email, contact_number, skill_flag_status, skill, certificate_flag_status, certificate, objective_flag_status, objective, experience_flag_status, experience, education_flag_status, education, language_flag_status, language, additional_feature_flag_status, additional_feature){
+    var skill_section = '';
+    var certificate_section = '';
+    var experience_section = '';
+    var education_section = '';
+    var language_section = '';
+    var profile_pic_tag = '';
+    var current_position = '';
+    var additional_feature_section = '';
+    var objective_section = '';
+    var contact_section = '';
+    var position_section = '';
+    var contact_number_section = '';
+    var contact_section = '';
+    var address_section = '';
+    var email_section = '';
+    if(profile_flag_status){
+        profile_pic_tag=`
+            <div class="picture">
+                <img src="${profile_pic}" />
+            </div>
+        `;
+    }
+    if(contact_number!='' || email!='' || address!=''){
+        contact_section=contact_section+`<div class="block"><h3>Details</h3><table class="contact-with-icon"><tbody>`;
+        if(contact_number!=''){
+            contact_section=contact_section+`
+                <tr>
+                    <td class="icon">
+                        <img src="${appURL}uploads/images/template/Phone_19.svg" />
+                    </td>
+                    <td>
+                        ${contact_number}
+                    </td>
+                </tr>
+            `;
+        }
+        if(address!=''){
+            contact_section=contact_section+`
+                <tr>
+                    <td class="icon">
+                        <img src="${appURL}uploads/images/template/Address_19.svg" />
+                    </td>
+                    <td>
+                        ${address}
+                    </td>
+                </tr>
+            `;
+        }
+        if(email!=''){
+            contact_section=contact_section+`
+                <tr>
+                    <td class="icon">
+                        <img src="${appURL}uploads/images/template/Mail_19.svg" />
+                    </td>
+                    <td>
+                        ${email}
+                    </td>
+                </tr>
+            `;
+        }
+        contact_section=contact_section+`</tbody></table></div>`;
+    }
+
+    if(language_flag_status){
+        language_section=language_section+`
+            <div class="block">
+                <h3>Languages</h3>
+                <table class="progress">
+                    <tbody>
+        `;
+        for(var language_i=0; language_i<language.length; language_i++){
+            language_section=language_section+`
+                <tr>
+                    <td class="progress-label">${language[language_i].language}</td>
+                    
+            `;
+            if(language[language_i].rating_status==1){
+                language_section=language_section+`
+                    <td class="progress-bar">
+                            <div class="bar">
+                                <div class="bar-fill" style="width: ${language[language_i].rating*20}%;"></div>
+                            </div>
+                        </td>
+                    `;
+            }
+            language_section=language_section+`</tr>`;
+        }
+        language_section=language_section+`</tbody></table></div>`;
+    }
+
+    if(certificate_flag_status){
+        certificate_section=certificate_section+`
+            <div class="block">
+            <h3>Certifications</h3>
+            <ul class="list">`;
+        for(var certificate_i=0; certificate_i<certificate.length; certificate_i++){
+            certificate_section=certificate_section+`<li>${certificate[certificate_i].document_type}</li>`;
+        }
+        certificate_section=certificate_section+`</ul></div>`;
+    }
+
+    if(objective_flag_status){
+        objective_section=objective_section+`
+            <div class="block">
+                <h3>Objective</h3>
+                <p>${objective}</p>
+            </div>
+        `;
+    }
+
+    if(education_flag_status){
+        education_section=education_section+`
+            <div class="block">
+                <h3>Education</h3>
+        `;
+        for(var education_i=0; education_i<education.length; education_i++){
+            education_section=education_section+`
+                <div class="subblock">
+                    <h5>${education[education_i].institution}</h5>
+                    <p>${education[education_i].qualification} in ${education[education_i].course_name}</p>
+                    <div class="year">${education[education_i].academic_year}</div>
+                </div>
+            `;
+        }
+        education_section=education_section+`</div>`;
+    }
+
+    if(experience_flag_status){
+        experience_section=experience_section+`<div class="block"><h3>Experience</h3>`;
+        for(var experience_i=0; experience_i<experience.length; experience_i++){
+            var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
+            var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
+            var date_status = false;
+            if (start_date != '0000-00-00' && start_date != '') {
+                date_status = true;
+                start_date = await utils.change_data_format(start_date);
+            }
+            if (date_status) {
+                if (end_date != '0000-00-00' && end_date != '') {
+                    end_date = await utils.change_data_format(end_date);
+                } else {
+                    end_date = 'Present';
+                    current_position = experience[experience_i].position;
+                }
+            }
+            experience_section = experience_section + `
+                <div class="subblock">
+                    <h5>${experience[experience_i].position} at ${experience[experience_i].company_name}</h5>
+                    <div class="year">${start_date} - ${end_date}</div>
+            `;
+            var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
+            if(responsibilities.length>0){
+                experience_section=experience_section+`<ul>`;
+                for(var responsibility_i=0; responsibility_i<responsibilities.length; responsibility_i++){
+                    experience_section=experience_section+`<li>${responsibilities[responsibility_i]}</li>`;
+                }
+                experience_section=experience_section+`</ul>`;
+            }
+            experience_section=experience_section+`</div>`;
+        }
+        experience_section=experience_section+`</div>`;
+    }
+    
+    if(skill_flag_status){
+        skill_section=skill_section+`<div class="block"><h3>Professional Skills</h3><ul class="col-2">`;
+        for(var skill_i=0; skill_i<skill.length; skill_i++){
+            skill_section=skill_section+`<li>${skill[skill_i].skill}</li>`
+        }
+        skill_section=skill_section+`</ul></div>`;
+    }
+
+    if(additional_feature_flag_status){
+        for(var additional_feature_i=0; additional_feature_i<additional_feature.length; additional_feature_i++){
+            if(additional_feature[additional_feature_i].show_status==1){
+                additional_feature_section=additional_feature_section+`
+                    <div class="block">
+                            <h3>${additional_feature[additional_feature_i].type}</h3>
+                            <div class="subblock">
+                                <p>${additional_feature[additional_feature_i].type_description}</p>
+                            </div>
+                        </div>
+                `;
+            }
+        }
+    }
+
     var html=`
         <!doctype html>
         <html lang="en">
@@ -6810,7 +6994,7 @@ async function template19(color_code, first_name, last_name, username, profile_f
                     font-weight: 700;
                     line-height: 15px;
                     letter-spacing: -0.3px;
-                    background-image: url(../img/Line.svg);
+                    background-image: url(${appURL}uploads/images/template/Line_19.svg);
                     background-repeat: repeat-x;
                     background-position: center;
                     margin-bottom: 7px; }
@@ -6851,6 +7035,10 @@ async function template19(color_code, first_name, last_name, username, profile_f
                     column-count: 2;
                     padding-left: 16px;
                     line-height: 19px; }
+                ul.list{
+                    padding-left: 16px;
+                    line-height: 19px;
+                }
                 
                 .wrapper {
                     width: 100%;
@@ -6861,7 +7049,12 @@ async function template19(color_code, first_name, last_name, username, profile_f
                     padding: 40px; }
                     @media print {
                     .wrapper {
-                        box-shadow: none; } }
+                        box-shadow: none;
+                        /*added css*/
+                        max-width: 100%;
+                        /*margin: 20px auto 20px auto;*/
+                        }
+                        }
                 
                 table {
                     width: 100%;
@@ -6926,7 +7119,7 @@ async function template19(color_code, first_name, last_name, username, profile_f
                     .picture img {
                     width: 100px;
                     height: 100px;
-                    object-fit: cover;
+                    object-fit: contain;
                     border-radius: 50%; }
                 
                 .year {
@@ -6947,159 +7140,22 @@ async function template19(color_code, first_name, last_name, username, profile_f
                     <tbody>
                         <tr>
                             <td class="left">
-                                <div class="picture">
-                                    <img src="./img/Photo.svg" />
-                                </div>
+                                ${profile_pic_tag}
                                 <h2>
-                                    <span>Taylor</span>
+                                    <span>${first_name}</span>
                                 </h2>
-                                <h1>Stimbert</h1>
-                                <div class="block">
-                                    <h3>Details</h3>
-                                    <table class="contact-with-icon">
-                                        <tbody>
-                                            <tr>
-                                                <td class="icon">
-                                                    <img src="./img/Phone.svg" />
-                                                </td>
-                                                <td>
-                                                    +1 129 8887 7232
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="icon">
-                                                    <img src="./img/Address.svg" />
-                                                </td>
-                                                <td>
-                                                    St. South Gate, CA 90280
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="icon">
-                                                    <img src="./img/Mail.svg" />
-                                                </td>
-                                                <td>
-                                                    amandagriff@gmail.com
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="icon">
-                                                    <img src="./img/Network.svg" />
-                                                </td>
-                                                <td>
-                                                    amandagriff.com
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div> <!-- ./block -->
-                                <div class="block">
-                                    <h3>Languages</h3>
-                                    <table class="progress">
-                                        <tbody>
-                                            <tr>
-                                                <td class="progress-label">Spanish</td>
-                                                <td class="progress-bar">
-                                                    <div class="bar">
-                                                        <div class="bar-fill" style="width: 90%;"></div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="progress-label">Spanish</td>
-                                                <td class="progress-bar">
-                                                    <div class="bar">
-                                                        <div class="bar-fill" style="width: 90%;"></div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="progress-label">Spanish</td>
-                                                <td class="progress-bar">
-                                                    <div class="bar">
-                                                        <div class="bar-fill" style="width: 90%;"></div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div><!-- ./block --> 
-                                <div class="block">
-                                    <h3>Certifications</h3>
-                                    <table class="arrow-table">
-                                        <tbody>
-                                            <tr>
-                                                <td class="icon-arrow">
-                                                    <img src="./img/arrow.svg" />
-                                                </td>
-                                                <td>
-                                                    <h4>Coursera</h4>
-                                                    <p>Graphic Design</p>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td class="icon-arrow">
-                                                    <img src="./img/arrow.svg" />
-                                                </td>
-                                                <td>
-                                                    <h4>Coursera</h4>
-                                                    <p>UI / UX Design</p>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div><!-- ./block -->                    
+                                <h1>${last_name}</h1>
+                                ${contact_section}
+                                ${language_section}
+                                ${certificate_section}
+                                <!-- ./block -->                    
                             </td>
                             <td class="right">
-                                <div class="block">
-                                    <h3>Graphic Design</h3>
-                                    <p>I'm a product designer focused on ensuring great user 
-                                        experience and meeting business needs of designed products. 
-                                        I’m also experienced in implementing marketing strategies and 
-                                        developing both on and offline campaigns. My philosophy is to make products </p>
-                                </div><!-- ./block-->
-                                <div class="block">
-                                    <h3>Graphic Design</h3>
-                                    <div class="subblock">
-                                        <h5>California College of the Arts</h5>
-                                        <p>California College of the Arts</p>
-                                        <div class="year">2015-2020</div>
-                                    </div>
-                                </div><!-- ./block-->
-                                <div class="block">
-                                    <h3>Experience</h3>
-                                    <div class="subblock">
-                                        <h5>UI Designer at Market Studios</h5>
-                                        <p>Successfully translated subject matter into concrete design 
-                                            for newsletters, promotional materials and sales collateral. 
-                                            Created design graphics for marketing and sales presentations, 
-                                            training videos and corporate websites.</p>
-                                        <div class="year">Oct 2012 — Sep 2015</div>
-                                    </div>
-                                </div><!-- ./block-->
-                                <div class="block">
-                                    <h3>Experience</h3>
-                                    <div class="subblock">
-                                        <h5>Graphic Designer at FireWeb</h5>
-                                        <p>Created new design themes for marketing and collateral materials. 
-                                            Collaborated with creative team to design and produce computer-generated 
-                                            artwork for marketing and promotional materials.</p>
-                                        <div class="year">Oct 2015 — Jan 2018</div>
-                                    </div>
-                                </div><!-- ./block-->
-                                <div class="block">
-                                    <h3>Professional Skills</h3>
-                                    <ul class="col-2">
-                                        <li>Figma</li>
-                                        <li>Sketch</li>
-                                        <li>Adobe Photoshop</li>
-                                        <li>Adobe Illustrator</li>
-                                        <li>Web Design (HTML/CSS)</li>
-                                        <li>Premiere Pro</li>
-                                        <li>After Effects</li>
-                                        <li>Photography</li>
-                                    </ul>
-                                </div><!-- ./block-->
+                                ${objective_section}
+                                ${education_section}
+                                ${experience_section}
+                                ${skill_section}
+                                ${additional_feature_section}
                             </td>
                         </tr>
                     </tbody>
@@ -7108,6 +7164,505 @@ async function template19(color_code, first_name, last_name, username, profile_f
         
         </body>
         
+        </html>
+    `;
+    return html;
+}
+
+async function template20(color_code, first_name, last_name, username, profile_flag_status, profile_pic, address, email, contact_number, skill_flag_status, skill, certificate_flag_status, certificate, objective_flag_status, objective, experience_flag_status, experience, education_flag_status, education, language_flag_status, language, additional_feature_flag_status, additional_feature){
+    var skill_section = '';
+    var certificate_section = '';
+    var experience_section = '';
+    var education_section = '';
+    var language_section = '';
+    var profile_pic_tag = '';
+    var current_position = '';
+    var additional_feature_section = '';
+    var objective_section = '';
+    var contact_section = '';
+    var position_section = '';
+    var contact_number_section = '';
+    var contact_section = '';
+    var address_section = '';
+    var email_section = '';
+    
+    if(color_code==''){
+        color_code='#6F3F3F';
+    }
+
+    if(contact_number!='' || email!='' || address!=''){
+        contact_section=contact_section+`<tr><td class="left"><h3>Contacts</h3></td><td class="right"><table class="contact-with-icon"><tbody>`;
+                                        `<tr>
+                                            <td class="icon">
+                                                <img src="./img/Phone.svg" />
+                                            </td>
+                                            <td>
+                                                +1 129 8887 7232
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="icon">
+                                                <img src="./img/Address.svg" />
+                                            </td>
+                                            <td>
+                                                St. South Gate, CA 90280
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="icon">
+                                                <img src="./img/Mail.svg" />
+                                            </td>
+                                            <td>
+                                                amandagriff@gmail.com
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>`;
+        if(contact_number!=''){
+            contact_section=contact_section+`
+                <tr>
+                    <td class="icon">
+                        <img src="${appURL}uploads/images/template/Phone_20.svg" />
+                    </td>
+                    <td>
+                        ${contact_number}
+                    </td>
+                </tr>
+            `;
+        }  
+        if(address!=''){
+            contact_section=contact_section+`
+                <tr>
+                    <td class="icon">
+                        <img src="${appURL}uploads/images/template/Address_20.svg" />
+                    </td>
+                    <td>
+                        ${address}
+                    </td>
+                </tr>
+            `;
+        }
+        if(email!=''){
+            contact_section=contact_section+`
+                <tr>
+                    <td class="icon">
+                        <img src="${appURL}uploads/images/template/Address_20.svg" />
+                    </td>
+                    <td>
+                        ${email}
+                    </td>
+                </tr>
+            `;
+        }
+        contact_section=contact_section+`</tbody></table></td></tr>`;
+    }
+
+    if(objective_flag_status){
+        objective_section=`<tr>
+                            <td class="left">
+                                <h3>Profile</h3>
+                            </td>
+                            <td class="right">
+                                ${objective}
+                            </td>
+                        </tr>`;
+    }
+
+    if(education_flag_status){
+        education_section=education_section+`<tr><td class="left sub"><h3>Education</h3>
+                            </td>`;
+        var highest_education='';
+        var education_tag='';
+        for(var education_i=0; education_i<education.length; education_i++){
+            if(education_i==0){
+                highest_education=education[education_i].qualification;
+            }
+            education_tag=education_tag+`
+                <tr>
+                    <td class="left">
+                        <h5>${education[education_i].academic_year}</h5>
+                    </td>
+                    <td class="right">
+                        <h4>${education[education_i].institution}</h4>
+                        <div>${education[education_i].qualification} in ${education[education_i].course_name}, GPA: ${education[education_i].cgpa}</div>
+                    </td>
+                </tr
+            `;
+        }
+        education_section=education_section+`<td class="right sub">High degree in ${highest_education}</td>`+education_tag;
+    }
+
+    if(experience_flag_status){
+        experience_section=experience_section+`<tr><td class="left sub"><h3>Employment</h3></td>`;
+        //arrange array data based on start_date
+        var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
+        //console.log(sorted_experience)
+        var get_start_date='';
+        var get_end_date='';
+        for(var exp_i=0; exp_i<sorted_experience.length; exp_i++){
+            var exp_start_date = sorted_experience[exp_i].start_date ? sorted_experience[exp_i].start_date : '';
+            var exp_end_date = sorted_experience[exp_i].end_date ? sorted_experience[exp_i].end_date : '';
+            if(exp_i==0){
+                if (exp_start_date != '0000-00-00' && exp_start_date != '') {
+                    get_start_date=sorted_experience[exp_i].start_date;
+                }
+            }
+            if(exp_i==sorted_experience.length-1){
+                if(exp_end_date!='0000-00-00' && exp_end_date!=''){
+                    get_end_date=sorted_experience[exp_i].end_date;
+                }else{
+                    var current_date=new Date();
+                    var two_digit_month=(current_date.getMonth()+1).toString().padStart(2,'0');
+                    console.log(current_date.getMonth())
+                    get_end_date=current_date.getFullYear()+'-'+two_digit_month+'-'+current_date.getDate();
+                }
+                console.log(get_end_date)
+            }
+        }
+        //console.log(get_start_date,get_end_date);
+
+        if(get_start_date!='' && get_end_date!=''){
+            var formated_start_date = '';
+            var formated_end_date = '';
+            var formated_date = '';
+            const date1 = new Date(get_start_date);
+            const date2 = new Date(get_end_date);
+            const diffYears = date2.getFullYear() - date1.getFullYear();
+            const diffMonths = date2.getMonth() - date1.getMonth();
+            const diffDays = date2.getDate() - date1.getDate();
+            console.log(`${diffYears} year  ${diffMonths} month`);
+            let years = diffYears;
+            let months = diffMonths;
+            let days = diffDays;
+            if (days < 0) {
+                months -= 1;
+                days += new Date(date2.getFullYear(), date2.getMonth(), 0).getDate();
+            }
+            if (months < 0) {
+                years -= 1;
+                months += 12;
+            }
+            console.log(years,months,days)
+            var txt_years=years<=1 ? await utils.convertNumberToWords(years)+' year' : await utils.convertNumberToWords(years)+' years';
+            var txt_months=months<=1 ? await utils.convertNumberToWords(months)+' month' : await utils.convertNumberToWords(months)+' months';
+            console.log(txt_years,txt_months);
+            if (years != 0 && months != 0) {
+                formated_date = txt_years + ' and ' + txt_months;
+            } else if (years == 0 && months == 0) {
+                formated_date = txt_months;
+            } else if (months == 0) {
+                formated_date = txt_years;
+            } else if (years == 0) {
+                formated_date = txt_months;
+            }
+            experience_section=experience_section+`<td class="right sub">${formated_date} of work experience</td>`
+        }else{
+            experience_section=experience_section+`<td></td></tr>`;
+        }
+        
+        for(var experience_i=0; experience_i<experience.length; experience_i++){
+            var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
+            var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
+            var date_status = false;
+            if (start_date != '0000-00-00' && start_date != '') {
+                date_status = true;
+                start_date = await utils.change_data_format(start_date);
+            }
+            if (date_status) {
+                if (end_date != '0000-00-00' && end_date != '') {
+                    end_date = await utils.change_data_format(end_date);
+                } else {
+                    end_date = 'Present';
+                    current_position = experience[experience_i].position;
+                }
+            }
+            experience_section = experience_section + `<tr>
+                            <td class="left sub">
+                                <h5>${start_date} — ${end_date}</h5>
+                            </td>
+                            <td class="right sub">
+                                <h4>${experience[experience_i].position} at ${experience[experience_i].company_name}</h4>`;
+            var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
+            if(responsibilities.length>0){
+                experience_section=experience_section+`<div><ul>`;
+                for(var responsibility_i=0; responsibility_i<responsibilities.length; responsibility_i++){
+                    experience_section=experience_section+`<li>${responsibilities[responsibility_i]}</li>`;
+                }
+                experience_section=experience_section+`</ul></div>`;
+            }
+            experience_section=experience_section+`</td></tr>`;
+        }
+    }
+
+    if(certificate_flag_status){
+        certificate_section=certificate_section+`
+            <tr>
+                <td class="left">
+                    <h3>Certifications</h3>
+                </td>
+                <td class="right">
+        `;
+        for(var certificate_i=0; certificate_i<certificate.length; certificate_i++){
+            certificate_section=certificate_section+`<h4>${certificate[certificate_i].document_type}</h4>`;
+        }
+        certificate_section=certificate_section+`</td></tr>`;
+    }
+
+    if(skill_flag_status){
+        skill_section=skill_section+`<tr><td class="left"><h3>Skills</h3></td><td class="right"><table class="star-table"><tbody>`;
+        var i=1;
+        for(var skill_i=0; skill_i<skill.length; skill_i+=2){
+            skill_section=skill_section+`<tr>`;
+            skill_section=skill_section+`<td class="label">${skill[skill_i].skill}</td>`;
+            skill_section=skill_section+`<td>`;
+                if(skill[skill_i].rating_status==1){
+                    for(var rating_i=1; rating_i<=5; rating_i++){
+                        if(rating_i<=skill[skill_i].rating){
+                            skill_section=skill_section+`<img src="${appURL}uploads/images/template/Star_20.svg" />`;
+                        }else{
+                            skill_section=skill_section+`<img src="${appURL}uploads/images/template/Star_dis_20.svg" />`;
+                        }
+                            
+                    }
+                }
+                skill_section=skill_section+`</td>`;
+            if(skill_i+1<skill.length){
+                skill_section=skill_section+`<td class="label">${skill[skill_i+1].skill}</td><td>`;
+                if(skill[skill_i+1].rating_status==1){
+                    for(var rating_i=1; rating_i<=5; rating_i++){
+                        if(rating_i<=skill[skill_i+1].rating){
+                            skill_section=skill_section+`<img src="${appURL}uploads/images/template/Star_20.svg" />`;
+                        }else{
+                            skill_section=skill_section+`<img src="${appURL}uploads/images/template/Star_dis_20.svg" />`;
+                        }
+                            
+                    }
+                }
+                skill_section=skill_section+`</td>`;
+            }else{
+                skill_section=skill_section+`<td></td><td></td>`;
+            }
+            skill_section=skill_section+`</tr>`;
+        }
+        skill_section=skill_section+`</tbody></table></td></tr>`;
+    }
+
+    if(language_flag_status){
+        language_section=language_section+`<tr><td class="left"><h3>Languages</h3></td><td class="right"><table class="star-table"><tbody>`;
+        for(var language_i=0; language_i<language.length; language_i+=2){
+            language_section=language_section+`<tr>`;
+            language_section=language_section+`<td class="label">${language[language_i].language}</td>`
+            language_section=language_section+`<td>`;
+            if(language[language_i].rating_status==1){
+                for(var lang_rating_i=1; lang_rating_i<=5; lang_rating_i++){
+                    if(lang_rating_i<=language[language_i].rating){
+                        language_section=language_section+`<img src="${appURL}uploads/images/template/Star_20.svg" />`;
+                    }else{
+                        language_section=language_section+`<img src="${appURL}uploads/images/template/Star_dis_20.svg" />`;
+                    }
+                }
+            }
+            language_section=language_section+`</td>`;
+            
+            if(language_i+1<language.length){
+                language_section=language_section+`<td class="label">${language[language_i+1].language}</td>`;
+                language_section=language_section+`<td>`;
+                if(language[language_i+1].rating_status==1){
+                    for(var lang_rating_i=1; lang_rating_i<=5; lang_rating_i++){
+                        if(lang_rating_i<=language[language_i+1].rating){
+                            language_section=language_section+`<img src="${appURL}uploads/images/template/Star_20.svg" />`;
+                        }else{
+                            language_section=language_section+`<img src="${appURL}uploads/images/template/Star_dis_20.svg" />`;
+                        }
+                    }
+                }
+            }else{
+                language_section=language_section+`<td></td><td></td>`;
+            }
+            language_section=language_section+`</tr>`;
+        }
+        language_section=language_section+`</tbody></table></td></tr>`;
+    }
+
+    if(additional_feature_flag_status){
+        for(var additional_feature_i=0; additional_feature_i<additional_feature.length; additional_feature_i++){
+            if(additional_feature[additional_feature_i].show_status==1){
+                additional_feature_section=additional_feature_section+`<tr>
+                    <td class="left">
+                        <h3>${additional_feature[additional_feature_i].type}</h3>
+                    </td>
+                    <td class="right"><div>${additional_feature[additional_feature_i].type_description}</div></td></tr>`;
+            }
+        }
+    }
+    
+    var html=`
+        <!doctype html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>CV Template</title>
+            <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+            <style>
+                * {
+                    box-sizing: border-box; }
+
+                    body {
+                    font-family: "Roboto", sans-serif;
+                    font-weight: 400;
+                    color: rgba(33, 33, 33, 0.6);
+                    font-size: 11px;
+                    line-height: 18px;
+                    letter-spacing: -0.2px; }
+
+                    h1, h2, h3, h4, h5, h6, p {
+                    margin: 0; }
+
+                    h1 {
+                    font-size: 24px;
+                    font-weight: 600;
+                    line-height: 25px;
+                    letter-spacing: -0.2px; }
+
+                    h2 {
+                    font-size: 10px;
+                    font-weight: 400;
+                    line-height: 19px;
+                    letter-spacing: 0.81px;
+                    padding-bottom: 5px; }
+
+                    h3 {
+                    font-size: 13px;
+                    font-weight: 600;
+                    line-height: 15px;
+                    letter-spacing: -0.2px;
+                    text-align: left;
+                    color: white; }
+
+                    h4 {
+                    font-size: 12px;
+                    font-weight: 500;
+                    line-height: 18px;
+                    letter-spacing: -0.3px;
+                    color: #212121;
+                    padding-bottom: 5px; }
+
+                    h5 {
+                    font-size: 10px;
+                    font-weight: 400;
+                    line-height: 18px;
+                    letter-spacing: 0px;
+                    text-align: left;
+                    color: rgba(255, 255, 255, 0.7); }
+
+                    .wrapper {
+                    width: 100%;
+                    max-width: 595px;
+                    margin: 20px auto;
+                    min-height: 842px;
+                    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+                    position: relative; }
+                    @media print {
+                        .wrapper {
+                        box-shadow: none;
+                        max-width: 100%; } }
+
+                    table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    position: relative;
+                    z-index: 2; }
+                    table .left {
+                        padding: 0 10px 24px 34px;
+                        background-color: ${color_code};
+                        width: 170px; }
+                        table .left.first {
+                        padding-top: 35px;
+                        padding-bottom: 13px; }
+                        table .left.sub {
+                        padding-bottom: 12px; }
+                    table .right {
+                        padding: 0 24px 24px; }
+                        table .right.first {
+                        padding-top: 35px;
+                        padding-bottom: 13px; }
+                        table .right.sub {
+                        padding-bottom: 12px; }
+                    table.main td {
+                        vertical-align: top; }
+
+                    .star-table .label {
+                    width: 110px;
+                    font-size: 12px;
+                    font-weight: 500;
+                    line-height: 18px;
+                    letter-spacing: -0.3px;
+                    text-align: left;
+                    color: #212121; }
+                    .star-table td {
+                    padding-bottom: 7px; }
+
+                    .left-bg {
+                    width: 170px;
+                    height: 100%;
+                    background-color: ${color_code};
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    z-index: 1; }
+
+                    .icon {
+                    vertical-align: middle;
+                    width: 18px;
+                    text-align: center;
+                    padding-bottom: 6px; }
+                    .icon img {
+                        display: block;
+                        width: 14px;
+                        height: 14px;
+                        object-fit: contain;
+                        opacity: .2; }
+                    .icon + td {
+                        padding-bottom: 6px; }
+
+                    /*# sourceMappingURL=style.css.map */
+
+            </style>
+        </head>
+
+        <body>
+
+            <div class="wrapper">        
+                <table class="main">
+                    <tbody>
+                        <tr>
+                            <td class="left first"></td>
+                            <td class="right first">
+                                <h2>${current_position}</h2>
+                                <h1>${username}</h1>
+                            </td>
+                        </tr>
+                        ${contact_section}
+                        ${objective_section}
+                        ${education_section}
+                        ${experience_section}
+                        ${certificate_section}
+                        ${skill_section}
+                        ${language_section}
+                        ${additional_feature_section}
+                    </tbody>
+                </table>
+                <div class="left-bg">
+
+                </div>
+            </div><!-- ./wrapper -->
+
+        </body>
+
         </html>
     `;
     return html;
@@ -7323,6 +7878,9 @@ async function savePdfAndDownload(req, res) {
                         } else if (template_id == 19) {
                             html_code = await template19(color_code, first_name, last_name, username, profile_flag_status, profile_pic, address, email, other_contact, skill_flag_status, skill, certificate_flag_status, certificate, objective_flag_status, objective, experience_flag_status, experience, education_flag_status, education, language_flag_status, language, additional_feature_flag_status, additional_feature);
                             template_available_flag = true;
+                        } else if (template_id == 20) {
+                            html_code = await template20(color_code, first_name, last_name, username, profile_flag_status, profile_pic, address, email, other_contact, skill_flag_status, skill, certificate_flag_status, certificate, objective_flag_status, objective, experience_flag_status, experience, education_flag_status, education, language_flag_status, language, additional_feature_flag_status, additional_feature);
+                            template_available_flag = true;
                         }
                         if (template_available_flag) {
                             console.log(html_code);
@@ -7485,6 +8043,7 @@ module.exports = {
     template17,
     template18,
     template19,
+    template20,
     convertPdfToImage,
     savePdfAndDownload
 }
