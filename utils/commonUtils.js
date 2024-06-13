@@ -113,6 +113,52 @@ function change_data_format(inputDate) {
     return resultArray;
   }
 
+  async function convertNumberToWords(num){
+    const units = [
+        "zero", "one", "two", "three", "four", "five",
+        "six", "seven", "eight", "nine"
+    ];
+    const teens = [
+        "ten", "eleven", "twelve", "thirteen", "fourteen",
+        "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"
+    ];
+    const tens = [
+        "", "", "twenty", "thirty", "forty",
+        "fifty", "sixty", "seventy", "eighty", "ninety"
+    ];
+  
+    const scales = [
+          "", "thousand", "million", "billion", "trillion"
+      ];
+
+    if(num<10){
+      return units[num];
+    }
+
+    if(num<20){
+      return teens[num-10];
+    }
+
+    if(num<100){
+      return tens[Math.floor(num / 10)] + (num % 10 ? " " + units[num % 10] : "");
+    }
+
+  }
+
+  async function sortExperienceByDate(experienceData,order = 'asc'){
+    const experienceCopy = experienceData.slice();
+    const sorted_experience=experienceCopy.sort((a,b)=>{
+      const dateA=new Date(a.start_date);
+      const dateB=new Date(b.start_date);
+      if (order === 'asc') {
+        return dateA - dateB;
+      } else {
+        return dateB - dateA;
+      }
+    });
+    return sorted_experience;
+  }
+
 module.exports={
     current_datetime,
     current_date,
@@ -122,5 +168,7 @@ module.exports={
     change_data_format,
     getRandomUniqueFiveDigitCode,
     grouped_delivered_room_data,
-    change_date_format_to_year
+    change_date_format_to_year,
+    convertNumberToWords,
+    sortExperienceByDate
 }
