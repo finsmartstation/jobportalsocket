@@ -1,4 +1,4 @@
-function  current_datetime() {
+function  current_datetime_normal() {
     var current_date = new Date();
     var date = current_date.toISOString().slice(0, 10);
     var hours = current_date.getHours();
@@ -14,6 +14,26 @@ function  current_datetime() {
     var time = hr + ":" + min + ":" + sec;
     var datetime = date + " " + time;
     return datetime;
+}
+
+function current_datetime(){
+  const options = {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Kolkata' // Adjusted to 'Asia/Kolkata' for the correct timezone
+  };
+  
+  const formatter = new Intl.DateTimeFormat('en-GB', options);
+  const current_date = new Date();
+  const formattedDateTime = formatter.format(current_date).replace(/(\d{2})\/(\d{2})\/(\d{4}),/, '$3-$2-$1');
+  
+    return formattedDateTime;
+  
 }
 
 function current_date(){
@@ -115,20 +135,20 @@ function change_data_format(inputDate) {
 
   async function convertNumberToWords(num){
     const units = [
-        "zero", "one", "two", "three", "four", "five",
-        "six", "seven", "eight", "nine"
+        "Zero", "One", "Two", "Three", "Four", "Five",
+        "Six", "Seven", "Eight", "Nine"
     ];
     const teens = [
-        "ten", "eleven", "twelve", "thirteen", "fourteen",
-        "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"
+        "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen",
+        "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
     ];
     const tens = [
-        "", "", "twenty", "thirty", "forty",
-        "fifty", "sixty", "seventy", "eighty", "ninety"
+        "", "", "Twenty", "Thirty", "Forty",
+        "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
     ];
   
     const scales = [
-          "", "thousand", "million", "billion", "trillion"
+          "", "Thousand", "Million", "Billion", "Trillion"
       ];
 
     if(num<10){

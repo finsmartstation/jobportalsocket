@@ -221,7 +221,7 @@ async function saveCvData(datetime,user_id,file_name,resume,preview_image_path,j
 
 async function updateCvData(id,datetime,user_id,file_name,resume,preview_image_path,json_data){
     //const results=await db.sequelize.query("UPDATE `user_resume` SET `datetime`='"+datetime+"',`file_name`='"+file_name+"', `resume`='"+resume+"', `preview_image_path`='"+preview_image_path+"', `json_data`='"+json_data+"' where `user_id`='"+user_id+"' and `id`='"+id+"' ");
-    const results=await db.sequelize.query("UPDATE `user_resume` SET `datetime`='"+datetime+"', `resume`='"+resume+"', `preview_image_path`='"+preview_image_path+"', `json_data`='"+json_data+"' where `user_id`='"+user_id+"' and `id`='"+id+"' ");
+    const results=await db.sequelize.query("UPDATE `user_resume` SET `datetime`='"+datetime+"', `resume`='"+resume+"',`file_name`='"+file_name+"', `preview_image_path`='"+preview_image_path+"', `json_data`='"+json_data+"' where `user_id`='"+user_id+"' and `id`='"+id+"' ");
     return results[0];
 }
 
