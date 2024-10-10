@@ -5,11 +5,14 @@ const serverKeyJobSeeker=process.env.JOBSEEKERFCMTOKEN;
 const fcmRecuriter = new FCM(serverKeRecuriter);
 const fcmJobSeeker= new FCM(serverKeyJobSeeker);
 const queries= require('../models/queries/queries');
+const employeeNotificationController=require("./notificationEmployeeController");
+const jobseekerNotificationController=require("./notificationJobSeekerController");
 
 async function sendNotification(user_id,receiver_id,room,message,message_type){
     //get receiver data
     var get_receiver_data=await queries.userDeviceToken(receiver_id);
     console.log('receiver data ',get_receiver_data);
+    console.log(get_receiver_data.length)
     if(get_receiver_data.length>0){
         var UserProfile=await queries.UserProfile(user_id);
         console.log(UserProfile);
@@ -34,23 +37,29 @@ async function sendNotification(user_id,receiver_id,room,message,message_type){
             name=UserProfile[0].username.replace(/\s+$/, '');
         }
         //console.log(name)
+        console.log(get_receiver_data);
+        var user_device_tokens=await get_receiver_data.map(res=>res.user_fcm_token);
+        console.log(user_device_tokens)
         if(access_id==1){
             //job seeker
             
             //name=get_receiver_data[0].first_name+' '+get_receiver_data[0].middle_name+' '+get_receiver_data[0].last_name;
-            for(var i=0; i<get_receiver_data.length; i++){
-                var send_notification=sendJobSeekerNotification(receiver_id,get_receiver_data[i].user_fcm_token,name,message,profile_pic,message_type,room);
-            }
+            // for(var i=0; i<get_receiver_data.length; i++){
+            //     var send_notification=sendJobSeekerNotification(receiver_id,get_receiver_data[i].user_fcm_token,name,message,profile_pic,message_type,room);
+            // }
+            var send_notification=jobseekerNotificationController.sendJobSeekerNotification(receiver_id,user_device_tokens,name,message,profile_pic,message_type,room);
         }else if(access_id==2){
             //receuriter
             // if(get_receiver_data[0].logo!=''){
             //     profile_pic=baseURL+get_receiver_data[0].logo;
             // }
            // name=get_receiver_data[0].first_name;
-            for(var i=0; i<get_receiver_data.length; i++){
-                console.log(get_receiver_data[i].user_fcm_token);
-                var send_notification=sendRecuriterNotification(receiver_id,get_receiver_data[i].user_fcm_token,name,message,profile_pic,message_type,room);
-            }
+            // for(var i=0; i<get_receiver_data.length; i++){
+            //     console.log(get_receiver_data[i].user_fcm_token);
+            //     var send_notification=sendRecuriterNotification(receiver_id,get_receiver_data[i].user_fcm_token,name,message,profile_pic,message_type,room);
+            // }
+            
+            var send_notification=employeeNotificationController.sendEmployeeNotification(receiver_id,user_device_tokens,name,message,profile_pic,message_type,room);
         }
     }
 }

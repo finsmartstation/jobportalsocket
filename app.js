@@ -405,7 +405,7 @@ io.sockets.on('connection',async function(socket){
 
         socket.on("test_changes",async function(data){
             try{
-                io.sockets.in(socket.id).emit('test_changes',{status:true, statuscode:200, message: "last changes affected on 13-03-2024"});
+                io.sockets.in(socket.id).emit('test_changes',{status:true, statuscode:200, message: "last changes affected on 09-10-2024"});
             }catch(e){
                 console.error('Error in test change',e)
             }
@@ -452,7 +452,7 @@ io.sockets.on('connection',async function(socket){
                                     // console.log(save_block_message)
                                     if(save_block_message>0){
                                         // console.log('Data saved to chat list')
-                                        io.sockets.in(socket.id).emit('block',{status: true,statuscode: 200,message: 'Blocked',room: room});
+                                        io.sockets.in(socket.id).emit('block',{status: true,statuscode: 200,message: 'Blocked successfully',room: room});
                                         //emit messages to user
                                         var sender_roomChatMessage=await messageController.roomChatMessage(user_id,receiver_id,room,1,'');
                                         io.sockets.in(room+'_'+user_id).emit('message',sender_roomChatMessage);

@@ -194,7 +194,7 @@ async function reportChat(user_id,access_token,receiver_id,room){
             response={
                 status: true,
                 statuscode: 200,
-                message: "success"
+                message: "Reported successfully"
             }
         }else{
             response={
@@ -277,7 +277,7 @@ async function unblockUserChat(user_id,access_token,receiver_id,room){
                     response={
                         status: true,
                         statuscode: 200,
-                        message: "success",
+                        message: "Unblocked successfully",
                         room: room
                     }
                 }else{

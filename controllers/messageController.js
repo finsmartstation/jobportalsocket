@@ -85,7 +85,9 @@ async function sendMessage(user_id,receiver_id,room,room_type,message,message_ty
         var save_message=await queries.saveVoiceMessage(current_datetime,user_id,receiver_id,room,room_type,message,message_type,optional_text,thumbnail,duration,delivered_status,read_status,JSON.stringify(message_data),message_id,file_size);
     }
     //send notification
-    let send_notification=await notificationController.sendNotification(user_id,receiver_id,room,message,message_type);
+    if(!user_blocked_status){
+        let send_notification=await notificationController.sendNotification(user_id,receiver_id,room,message,message_type);
+    }
     return [save_message,user_blocked_status];
 }
 
@@ -203,7 +205,7 @@ async function roomChatMessage(user_id,receiver_id,room,limit=0,last_message_id)
             }else if(roomMessages[i].message_type=='notification'){
                 //console.log('yes',roomMessages[i].message)
                 if(roomMessages[i].message=='block'){
-                    roomMessages[i].message='You bloked this user.';
+                    roomMessages[i].message='You blocked this user.';
                 }else if(roomMessages[i].message=='unblock'){
                     roomMessages[i].message='You unblocked this user.'
                 }
@@ -781,49 +783,71 @@ async function forwardMessages(user_id,to_users,message_ids){
             forward_thumbnail=check_forward_message[0].thumbnail;
             forward_duration=check_forward_message[0].duration;
         }
+        console.log(split_to_users)
         for(var j=0;j<split_to_users.length;j++){
             console.log('second ',split_to_users[j])
             var room=await utils.createRoom(user_id,split_to_users[j]);
             console.log('room data ',room)
-            console.log(split_to_users[j],emit_user_data)
-            //check user already exit in array
-            var check_same_user_exist=await utils.check_same_user_exist(split_to_users[j],emit_user_data);
-            //console.log(check_same_user_exist)
-            if(check_same_user_exist==false){
-                emit_user_data.push({
-                    user_id: split_to_users[j],
-                    room: room,
-                    message_count: split_message_ids.length
-                });
+
+            //check user block status
+            var checkUserBlocked=await queries.checkUserBlocked(split_to_users[j],user_id,room);
+            //console.log(user_id,split_to_users[j],room,checkUserBlocked)
+            if(checkUserBlocked.length>0){
+                //user is blocked
+                var message_data=[
+                    {
+                        user_id: user_id,
+                        datetime: current_datetime,
+                        delivered_status: 1,
+                        delivered_datetime: current_datetime,
+                        read_status: 1,
+                        read_datetime: current_datetime,
+                        status: 1
+                    }
+                ];
+                query_values=query_values+"('"+current_datetime+"','"+user_id+"','"+split_to_users[j]+"','"+room+"','0','0','"+split_message_ids[i]+"','"+forward_message+"','"+forward_message_type+"','"+forward_optional_text+"','"+forward_thumbnail+"','"+forward_duration+"','0','0','"+JSON.stringify(message_data)+"'),";
+            }else{
+                console.log(split_to_users[j],emit_user_data)
+                //check user already exit in array
+                var check_same_user_exist=await utils.check_same_user_exist(split_to_users[j],emit_user_data);
+                //console.log(check_same_user_exist)
+                if(check_same_user_exist==false){
+                    emit_user_data.push({
+                        user_id: split_to_users[j],
+                        room: room,
+                        message_count: split_message_ids.length
+                    });
+                }
+                
+                var message_data=[
+                    {
+                        user_id: user_id,
+                        datetime: current_datetime,
+                        delivered_status: 1,
+                        delivered_datetime: current_datetime,
+                        read_status: 1,
+                        read_datetime: current_datetime,
+                        status: 1
+                    },{
+                        user_id: split_to_users[j],
+                        datetime: current_datetime,
+                        delivered_status: 0,
+                        delivered_datetime: '',
+                        read_status: 0,
+                        read_datetime: '',
+                        status: 1
+                    }
+                ];
+                //console.log(message_data)
+                console.log('message id ',split_message_ids[i],message_data)
+                //set case update query
+                //query=query+"INSERT INTO `chat_list`(`created_datetime`, `senter_id`, `receiver_id`, `room`, `room_type`, `replay_id`, `forward_id`, `message`, `message_type`, `optional_text`, `thumbnail`, `duration`, `delivered_status`, `read_status`, `message_data`) VALUES ('"+current_datetime+"','"+user_id+"','"+split_to_users[j]+"','"+room+"','0','0','"+split_message_ids[i]+"','"+forward_message+"','"+forward_message_type+"','"+forward_optional_text+"','"+forward_thumbnail+"','"+forward_duration+"','1','1','"+JSON.stringify(message_data)+"');";
+                query_values=query_values+"('"+current_datetime+"','"+user_id+"','"+split_to_users[j]+"','"+room+"','0','0','"+split_message_ids[i]+"','"+forward_message+"','"+forward_message_type+"','"+forward_optional_text+"','"+forward_thumbnail+"','"+forward_duration+"','0','0','"+JSON.stringify(message_data)+"'),";
+                //send notification
+                let send_notification=await notificationController.sendNotification(user_id,split_to_users[j],room,forward_message,forward_message_type);
+
             }
             
-            var message_data=[
-                {
-                    user_id: user_id,
-                    datetime: current_datetime,
-                    delivered_status: 1,
-                    delivered_datetime: current_datetime,
-                    read_status: 1,
-                    read_datetime: current_datetime,
-                    status: 1
-                },{
-                    user_id: split_to_users[j],
-                    datetime: current_datetime,
-                    delivered_status: 0,
-                    delivered_datetime: '',
-                    read_status: 0,
-                    read_datetime: '',
-                    status: 1
-                }
-            ];
-            //console.log(message_data)
-            console.log('message id ',split_message_ids[i],message_data)
-            //set case update query
-            //query=query+"INSERT INTO `chat_list`(`created_datetime`, `senter_id`, `receiver_id`, `room`, `room_type`, `replay_id`, `forward_id`, `message`, `message_type`, `optional_text`, `thumbnail`, `duration`, `delivered_status`, `read_status`, `message_data`) VALUES ('"+current_datetime+"','"+user_id+"','"+split_to_users[j]+"','"+room+"','0','0','"+split_message_ids[i]+"','"+forward_message+"','"+forward_message_type+"','"+forward_optional_text+"','"+forward_thumbnail+"','"+forward_duration+"','1','1','"+JSON.stringify(message_data)+"');";
-            query_values=query_values+"('"+current_datetime+"','"+user_id+"','"+split_to_users[j]+"','"+room+"','0','0','"+split_message_ids[i]+"','"+forward_message+"','"+forward_message_type+"','"+forward_optional_text+"','"+forward_thumbnail+"','"+forward_duration+"','0','0','"+JSON.stringify(message_data)+"'),";
-            //send notification
-            let send_notification=await notificationController.sendNotification(user_id,split_to_users[j],room,forward_message,forward_message_type);
-
         }
     }
     //trim data

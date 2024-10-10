@@ -721,8 +721,17 @@ async function template1(color_code, username, profile_flag_status, profile_pic,
     var objective_section = '';
     var contact_section='';
     var disability_section='';
+    var unchecked_star_color='#768491';
     if (color_code == '') {
         color_code = '#596977';
+    }
+
+    if(color_code=='#596977'){
+        unchecked_star_color='#768491';
+    }else if(color_code=='#6F3F3F'){
+        unchecked_star_color='#9A7878';
+    }else if(color_code=='#1C8EB5'){
+        unchecked_star_color='#6FC2DD';
     }
     if (profile_flag_status) {
         profile_pic_tag = `<div class="avatar mb-3">
@@ -786,7 +795,8 @@ async function template1(color_code, username, profile_flag_status, profile_pic,
                     if (rating_i <= skill[skill_i].rating) {
                         skill_section = skill_section + '<span class = "fa fa-star star-spacing checked"></span>'
                     } else {
-                        skill_section = skill_section + '<span class = "fa fa-star star-spacing unchecked"></span>'
+                        // skill_section=skill_section+'<span class = "fa fa-star unchecked"></span>'
+                        skill_section = skill_section + `<span class = "fa fa-star star-spacing" style="color: ${unchecked_star_color};"></span>`
                     }
                 }
                 // skill_section=skill_section+'<span class = "fa fa-star checked"></span>'
@@ -803,6 +813,7 @@ async function template1(color_code, username, profile_flag_status, profile_pic,
         skill_section = skill_section + '</section>'
     }
     console.log(skill_section);
+    //exit ()
     if (certificate_flag_status) {
         certificate_section = certificate_section + '<section role="main">';
         certificate_section = certificate_section + '<section class="mt-5">';
@@ -819,7 +830,8 @@ async function template1(color_code, username, profile_flag_status, profile_pic,
     if (experience_flag_status) {
         experience_section = experience_section + '<section>';
         experience_section = experience_section + '<h2 class="mb-3 mt-5">Experience</h2>';
-        experience = experience.reverse();
+        //experience = experience.reverse();
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -827,15 +839,33 @@ async function template1(color_code, username, profile_flag_status, profile_pic,
             if (start_date != '0000-00-00' && start_date != '') {
                 date_status = true;
                 start_date = await utils.change_data_format(start_date);
-                console.log('yes ', start_date);
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
                     }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
+                    }
+                    
                 } else {
                     end_date = 'Present';
                     current_position = experience[experience_i].position;
@@ -848,7 +878,7 @@ async function template1(color_code, username, profile_flag_status, profile_pic,
             }
 
             experience_section = experience_section + '<h4 class="black no-margin" style="font-weight:700;">' + experience[experience_i].company_name + '</h4>';
-            experience_section = experience_section + '<p class="black no-margin">' + experience[experience_i].position + '</p>';
+            experience_section = experience_section + '<p class="black no-margin mb-1">' + experience[experience_i].position + '</p>';
             if (date_status) {
                 experience_section = experience_section + '<p class="mb-2">' + start_date + ' - ' + end_date + '</p>';
             }
@@ -856,11 +886,16 @@ async function template1(color_code, username, profile_flag_status, profile_pic,
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             console.log(responsibilities);
             if (responsibilities.length > 0) {
-                experience_section = experience_section + '<ul class="list-margin">';
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + '<li>' + responsibilities[responsibility_i] + '</li>';
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<p>'+responsibilities[0]+'</p>';
+                }else{
+                    experience_section = experience_section + '<ul class="list-margin">';
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + '<li>' + responsibilities[responsibility_i] + '</li>';
+                    }
+                    experience_section = experience_section + '</ul>';
                 }
-                experience_section = experience_section + '</ul>';
+                
             }
             experience_section = experience_section + '</div>';
         }
@@ -949,9 +984,26 @@ async function template1(color_code, username, profile_flag_status, profile_pic,
                 h4{font-size: 14px;}
                 h5{font-size: 12px;}
                 .sidePane .details{ color: rgba(255, 255, 255, 0.7); font-weight: normal; word-wrap: break-word;}
-                .avatar{
+                /*.avatar{
                     width: 56px; height: 56px; display: inline-flex;border-radius: 100%;
                     overflow: hidden;
+                }*/
+
+                .avatar {
+                    width: 56px;
+                    height: 56px;
+                    display: inline-flex;
+                    border-radius: 100%;
+                    overflow: hidden;
+                     align-items: flex-start;
+                     //justify-content: center;
+                }
+
+                .avatar img {
+                    width: 100%;
+                    height: auto;
+                    object-fit: contain;
+                    object-position: center;
                 }
                 .checked {
                     color : #FFFFFF;
@@ -1082,14 +1134,15 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
     if (objective_flag_status) {
         objective_section = objective_section + '<section class="mb-4">';
         objective_section = objective_section + '<h2 class="mb-4">OBJECTIVE</h2>';
-        objective_section = objective_section + '<p style="color: black">' + objective + '</p>';
+        objective_section = objective_section + '<p style="color: #575757;">' + objective + '</p>';
         objective_section = objective_section + '</section>';
     }
 
     if (experience_flag_status) {
         experience_section = experience_section + '<section>';
         experience_section = experience_section + '<h2 class="mb-4">EXPERIENCE</h2>';
-        experience = experience.reverse();
+        //experience = experience.reverse();
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -1100,10 +1153,28 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -1121,14 +1192,18 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
             experience_section = experience_section + '<h4 class="black no-margin">' + experience[experience_i].company_name + '</h4>';
             //experience_section = experience_section + '<p class="black mt-0" style="margin-bottom: 0.2rem !important">' + experience[experience_i].position + '</p>';
             experience_section = experience_section + '<p class="black no-margin">' + experience[experience_i].position + '</p>';
-            experience_section = experience_section + '<p  class="mb-2">' + start_date + ' - ' + end_date + '</p>';
+            experience_section = experience_section + '<p  class="mb-2" style="color: #575757;">' + start_date + ' - ' + end_date + '</p>';
 
             if (responsibilities.length > 0) {
-                experience_section = experience_section + '<ul class="list-margin">';
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + '<li>' + responsibilities[responsibility_i] + '</li>';
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<p style="color: #575757;">'+responsibilities[0]+'</p>';
+                }else{
+                    experience_section = experience_section + '<ul class="list-margin">';
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + '<li style="color: #575757;">' + responsibilities[responsibility_i] + '</li>';
+                    }
+                    experience_section = experience_section + '</ul>';
                 }
-                experience_section = experience_section + '</ul>';
             }
         }
         experience_section = experience_section + '</section>';
@@ -1138,7 +1213,7 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
         education_section = education_section + '<section>';
         education_section = education_section + '<h2 class="mb-4 mt-4">EDUCATION</h2>';
         for (var education_i = 0; education_i < education.length; education_i++) {
-            education_section = education_section + '<div><h4 class="black  no-margin">' + education[education_i].institution + '</h4><p style="color: black">' + education[education_i].course_name + ', ' + education[education_i].academic_year + '</p></div>';
+            education_section = education_section + '<div><h4 class="black  no-margin">' + education[education_i].institution + '</h4><p style="color: #575757;">' + education[education_i].course_name + ', ' + education[education_i].academic_year + '</p></div>';
         }
         education_section = education_section + '</section>';
     }
@@ -1147,7 +1222,7 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
         certificate_section = certificate_section + '<section>';
         certificate_section = certificate_section + '<section class="mt-2"><h2 style="color: black">CERTIFICATIONS</h2></section>';
         for (var certificate_i = 0; certificate_i < certificate.length; certificate_i++) {
-            certificate_section = certificate_section + '<section class="mt-3"><p class="details">' + certificate[certificate_i].document_type + '</p></section>';
+            certificate_section = certificate_section + '<section class="mt-3"><p class="details" style="color: #575757;">' + certificate[certificate_i].document_type + '</p></section>';
         }
         certificate_section = certificate_section + '<section>';
     }
@@ -1156,13 +1231,13 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
         skill_section = skill_section + '<section class="mt-5"><h2 style="color: black">SKILLS</h2></section>';
         for (var skill_i = 0; skill_i < skill.length; skill_i++) {
             skill_section = skill_section + '<section class="mt-3">';
-            skill_section = skill_section + '<h5 class="title mt-3 details p mb-1">' + skill[skill_i].skill + '</h5>';
+            skill_section = skill_section + '<h5 class="title mt-3 details p mb-1" style="color: #575757;">' + skill[skill_i].skill + '</h5>';
             if (skill[skill_i].rating_status == 1) {
                 skill_section = skill_section + '<div class="w3-light-grey w3-xxlarge" style="width: 100%;">';
                 skill_section = skill_section + '<div class="w3-container w3-black" style="width: ' + skill[skill_i].rating * 20 + '%"></div>';
                 skill_section = skill_section + '</div>';
             }
-            skill_section = skill_section + '</section">';
+            skill_section = skill_section + '</section>';
         }
     }
 
@@ -1174,7 +1249,7 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
         language_section = language_section + '</section>';
         for (var language_i = 0; language_i < language.length; language_i++) {
             language_section = language_section + '<section class="mt-3">';
-            language_section = language_section + '<h5 class="title mt-3 details  mb-1">' + language[language_i].language + '</h5>';
+            language_section = language_section + '<h5 class="title mt-3 details  mb-1" style="color: #575757;">' + language[language_i].language + '</h5>';
             if (language[language_i].rating_status == 1) {
                 language_section = language_section + '<div class="w3-light-grey w3-tiny" style="width: 100%">';
                 language_section = language_section + '<div class="w3-container w3-black" style="width: ' + language[language_i].rating * 20 + '%"></div>';
@@ -1189,7 +1264,7 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
             if(additional_feature[additional_feature_i].show_status==1 && additional_feature[additional_feature_i].type_description!=''){
                 additional_feature_section = additional_feature_section + '<section class="mt-4">'
                 additional_feature_section = additional_feature_section + '<section class="mt-2"><h2 style="color: black">' + additional_feature[additional_feature_i].type.toUpperCase() + '</h2></section>';
-                additional_feature_section = additional_feature_section + '<section class="mt-3"><p class="details" style="color: black">' + additional_feature[additional_feature_i].type_description + '</p></section>'
+                additional_feature_section = additional_feature_section + '<section class="mt-3"><p class="details" style="color: #575757;">' + additional_feature[additional_feature_i].type_description + '</p></section>'
                 additional_feature_section = additional_feature_section + '</section>'
             }
         }
@@ -1197,7 +1272,7 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
 
     if(disabled==1){
         if(disability_type!=''){
-            disability_section=disability_section+`<section class="mt-4"><section class="mt-2"><h2 style="color: black">Physical Disability</h2></section><section class="mt-3"><p class="details" style="color: black">${disability_type}</p></section></section>`;
+            disability_section=disability_section+`<section class="mt-4"><section class="mt-2"><h2 style="color: black">Physical Disability</h2></section><section class="mt-3"><p class="details" style="color: #575757;">${disability_type}</p></section></section>`;
         }
     }
 
@@ -1247,6 +1322,8 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
             margin-top: 2%;
             color: rgb(255, 255, 255);
             text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 3px;
           }
           h3 {
             font-size: 16px;
@@ -1305,8 +1382,8 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
     
           .head_div {
             background-color: ${color_code};
-            border-bottom-left-radius: 24px;
-            border-bottom-right-radius: 24px;
+            /*border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;*/
           }
     
           /*@media print {
@@ -1329,17 +1406,26 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
           }*/
 
             .flex-container {
+
                 display: flex;
                 flex-wrap: wrap;
                 color: white;
+                align-items: flex-start;  /* Center items vertically */
+                justify-content: center;
+                margin-left: 15px;
             }
 
             .flex-item {
                 flex: 1;
                 display: flex;
                 align-items: flex-start;
+                justify-content: center;
+                /*align-items: flex-start;
+                justify-content: space-around;*/
                 margin: 5px 10px;
-                width: 33.33%;
+                padding-left: 20px;
+                padding-right: 20px;
+                //max-width: 33.33%;
             }
 
             .icon {
@@ -1359,6 +1445,28 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
             .list-margin{
                 padding-left: 16px;
             }
+
+            .three-column-row {
+                display: flex;
+                justify-content: space-between;
+                padding-left: 20px;
+                padding-right: 20px;
+                color: white;
+                }
+
+                .column {
+                flex: 1;
+                padding: 10px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                }
+
+                @media print {
+                .column {
+                    page-break-inside: avoid;
+                    margin-bottom: 10px;
+                }
+                }
         </style>
         <link
           rel="stylesheet"
@@ -1374,12 +1482,13 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
                   ${profile_pic_tag}
                   <div class="mt-2">
                     <h2 style="text-decoration: none">${username}</h2>
-                    <p class="details ms-2">${current_position}</p>
+                    <p class="details ms-2" style="color:#FFFFFFB2;">${current_position}</p>
                   </div>
                 </section>
               </div>
               <hr style="color: aliceblue" />
               <section role="main" class="d-flex align-items-center justify-content-center mb-2">
+              <!--<section role="main" class="d-flex mb-2">-->
           <!--<p class="details" style="color: rgb(170, 171, 172)">-->
           <!--<div class="flex-container">
             <p class="flex-item">
@@ -1412,6 +1521,20 @@ async function template2(color_code, username, profile_flag_status, profile_pic,
             </p>-->
             
           </section>
+          <!--<section class="three-column-row" align="center">
+            <div class="column">
+            <i class="fa fa-map-marker"></i> Nediyakkalavilai,Otta
+maramNediyakkalavilai,Otta
+maramNediyakkalavilai,Otta
+maram
+            </div>
+            <div class="column">
+            <i class="fa fa-envelope"></i> gokul.1998@gmail.com
+            </div>
+            <div class="column">
+            <i class="fa fa-phone"></i> 9876543210
+            </div>
+        </section>-->
         </div>
         <div class="row">
             <div class="col">
@@ -1502,6 +1625,7 @@ async function template3(color_code, username, profile_flag_status, profile_pic,
     if (experience_flag_status) {
         experience_section = experience_section + '<section>';
         experience_section = experience_section + '<h2 class="mb-2 mt-4">Experience</h2>';
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -1512,10 +1636,28 @@ async function template3(color_code, username, profile_flag_status, profile_pic,
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -1534,11 +1676,15 @@ async function template3(color_code, username, profile_flag_status, profile_pic,
             experience_section = experience_section + '<span class="no-margin"> ' + experience[experience_i].position + '</span><br>';
             experience_section = experience_section + '<span class="date">' + start_date + ' - ' + end_date + '</span>';
             if (responsibilities.length > 0) {
-                experience_section = experience_section + '<ul class="list-margin">';
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + '<li>' + responsibilities[responsibility_i] + '</li>';
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<p style="color: rgba(112, 112, 112, 0.87);">'+responsibilities[0]+'</p>';
+                }else{
+                    experience_section = experience_section + '<ul class="list-margin">';
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + '<li>' + responsibilities[responsibility_i] + '</li>';
+                    }
+                    experience_section = experience_section + '</ul>';
                 }
-                experience_section = experience_section + '</ul>';
             }
             experience_section = experience_section + '</div>';
         }
@@ -1706,6 +1852,7 @@ async function template3(color_code, username, profile_flag_status, profile_pic,
                                 word-wrap: break-word;
                             }
                             .avatar {
+                                /*max-width: 86px;*/
                                 width: 86px;
                                 height: 86px;
                                 display: inline-flex;
@@ -1776,7 +1923,7 @@ async function template3(color_code, username, profile_flag_status, profile_pic,
                                 <div class="p-5 my-3">
                                     <section class="name_sec">
                                         ${profile_pic_tag}
-                                        <div class="ms-3">
+                                        <div class="ms-3" style="padding-left:2px;width: 250px;white-space: normal;word-wrap: break-word;word-break: break-all;">
                                             <h2 class="mb-1">${username}</h2>
                                         <p class="details">${current_position}</p>
                                         </div>
@@ -2081,6 +2228,7 @@ async function template5(color_code, username, profile_flag_status, profile_pic,
     if (experience_flag_status) {
         experience_section = experience_section + '<div class="block">';
         experience_section = experience_section + '<h3><span>experience</span></h3>';
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -2091,10 +2239,28 @@ async function template5(color_code, username, profile_flag_status, profile_pic,
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -2108,11 +2274,15 @@ async function template5(color_code, username, profile_flag_status, profile_pic,
             experience_section = experience_section + '<h6>' + start_date + ' - ' + end_date + '</h6>';
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (responsibilities.length > 0) {
-                experience_section = experience_section + '<ul>';
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + '<li>' + responsibilities[responsibility_i] + '</li>';
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<p>'+responsibilities[0]+'</p>';
+                }else{
+                    experience_section = experience_section + '<ul>';
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + '<li>' + responsibilities[responsibility_i] + '</li>';
+                    }
+                    experience_section = experience_section + '</ul>';
                 }
-                experience_section = experience_section + '</ul>';
             }
             //experience_section=experience_section+'<ul><li>Designed safety-focused experiences for Riders and Drivers </li></ul>'
             experience_section = experience_section + '</div>';
@@ -2199,6 +2369,9 @@ async function template5(color_code, username, profile_flag_status, profile_pic,
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet"> 
         <!--<link href="css/style.css" rel="stylesheet" type="text/css">-->
         <style>
+        *{
+            box-sizing: border-box;
+        }
         body {
             font-size: 9px;
             color: rgba(0, 0, 0, 0.7);
@@ -2208,20 +2381,45 @@ async function template5(color_code, username, profile_flag_status, profile_pic,
             /*margin: 0;*/
              }
           
-          .wrapper {
+          /*.wrapper {
             width: 100%;
-            /*max-width: 595px;*/
             max-width: 715px;
             padding: 40px;
             margin: 20px auto;
-            /*margin: 0 !important;*/
             background-color: #f6f8fd;
             background-image: url(${appURL}uploads/images/template/top_bg.png), url(${appURL}uploads/images/template/bottom_bg.png);
             background-size: 300px, 100%;
             background-repeat: no-repeat, no-repeat;
             background-position: top right, center 104%;
             border-radius: 6px;
-            padding-bottom: 120px; }
+            padding-bottom: 120px;
+             }*/
+            .wrapper {
+                width: 100%;
+                max-width: 715px;
+                //margin: 20px auto;
+                margin: 20px auto 0px auto;
+                //padding: 40px;
+                padding-left: 40px;
+                padding-right: 40px;
+                padding-top: 40px;
+                padding-bottom: 0px;
+                
+                //margin-bottom: 0px;
+                //margin: 0;
+                background-color: #f6f8fd;
+                background-image: url(${appURL}uploads/images/template/top_bg.png); /* Only top image */
+                background-size: 300px;
+                background-repeat: no-repeat;
+                background-position: top right;
+                border-radius: 6px;
+                //padding-bottom: 120px;
+                //position: relative; /* Needed for the ::after pseudo-element to be positioned correctly */
+            }
+
+
+
+
             @media print {
               .wrapper {
                 border: 0; } }
@@ -2290,7 +2488,7 @@ async function template5(color_code, username, profile_flag_status, profile_pic,
             font-size: 9px;
             font-weight: 400;
             line-height: 14px;
-            max-width: 310px;
+            max-width: 500px;
             padding-bottom: 30px; }
           
           p {
@@ -2362,6 +2560,65 @@ async function template5(color_code, username, profile_flag_status, profile_pic,
                 width: 135px;
                 word-wrap: break-word;
             }
+            footer {
+                //position: fixed;
+                margin-top: -120px;
+                margin-left: -40px;
+                margin-right: -40px;
+                page-break-before: always;
+                background-color: #f6f8fd;
+                //background-color: red;
+                background-image: url(${appURL}uploads/images/template/template_5_bottom.png);
+                background-size: 100% 120px;
+                background-repeat: no-repeat;
+                background-position: center bottom;
+                border-radius: 6px;
+                //padding-bottom: 120px;
+                height: 120px; /* Set the height to match the image height */
+                box-sizing: border-box; /* Include padding and borders in the height */
+                //overflow: hidden; /* Prevent content overflow */
+                page-break-after: avoid; /* Prevent the footer from breaking inside */
+                display: block;
+            }
+            // footer:last-of-type {
+            //     page-break-after: auto;
+            // }
+
+           
+
+//             footer {
+//     position: fixed;
+//     bottom: 0;
+//     left: 0;
+//     right: 0;
+//     top: -120;
+//     height: 120px;
+//     margin: 0; /* Reset margins to prevent unwanted spacing */
+//     padding: 0; /* Reset padding */
+//     background-color: #f6f8fd;
+//     background-image: url(${appURL}uploads/images/template/template_5_bottom.png);
+//     background-size: cover; /* Ensure the image covers the footer area */
+//     background-repeat: no-repeat;
+//     background-position: center bottom;
+//     border-radius: 6px;
+//     box-sizing: border-box; /* Ensure padding and borders are included in the height */
+//     overflow: hidden; /* Prevent content overflow */
+// }
+
+
+// footer:last-of-type {
+//     page-break-after: avoid; /* Prevent a page break after the last footer */
+// }
+
+
+            // @media print {
+            //      footer {
+            //         page-break-before: auto; /* Ensure no unnecessary page breaks */
+            //         page-break-after: auto;
+            //     }
+            // }
+            
+
         </style>
     </head>
     
@@ -2405,7 +2662,8 @@ async function template5(color_code, username, profile_flag_status, profile_pic,
                 </td>`
 
 
-    var html_closing = `</tr></tbody></table></div></div></body></html>`;
+    var html_closing = `</tr></tbody></table></div><footer>
+</footer></div></body></html>`;
     return html_opening + html_closing;
 }
 
@@ -2424,7 +2682,7 @@ async function template6(color_code, username, profile_flag_status, profile_pic,
     
     if(address!='' || contact_number!='' || email!=''){
         contact_section=contact_section+`
-            <div class="block">
+            <div class="block" style="width: 185px;">
                 <h3><span>Details</span></h3>
         `;
         if(address!=''){
@@ -2502,12 +2760,13 @@ async function template6(color_code, username, profile_flag_status, profile_pic,
         objective_section = objective_section + `
         <div class="block">
             <h3><span>profile</span></h3>
-            <p>${objective}</p>
+            <p style="width: 90%;">${objective}</p>
         </div>`;
     }
 
     if (experience_flag_status) {
         experience_section = experience_section + '<div class="block"><h3><span>experience</span></h3>';
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -2518,10 +2777,28 @@ async function template6(color_code, username, profile_flag_status, profile_pic,
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -2536,11 +2813,15 @@ async function template6(color_code, username, profile_flag_status, profile_pic,
             
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (experience[experience_i].responsilbilities.length > 0) {
-                experience_section = experience_section + '<ul>';
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + '<li>' + responsibilities[responsibility_i] + '</li>';
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<p  style="width: 90%">'+responsibilities[0]+'</p>';
+                }else{
+                    experience_section = experience_section + '<ul  style="width: 90%;">';
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + '<li>' + responsibilities[responsibility_i] + '</li>';
+                    }
+                    experience_section = experience_section + '</ul>';
                 }
-                experience_section = experience_section + '</ul>';
             }
 
         }
@@ -2592,14 +2873,15 @@ async function template6(color_code, username, profile_flag_status, profile_pic,
             color: rgba(0, 0, 0, 0.7);
             font-family: "Roboto", sans-serif;
             line-height: 11px;
-            /*margin: 0;*/
+            margin: 0;
              }
           
           .wrapper {
             width: 100%;
-            max-width: 595px;
+            max-width: 695px;
             padding: 40px;
-            margin: 20px auto;
+            /*margin: 20px auto;*/
+            margin: 0px 0px;
             /*border: 1px solid #000;*/
              }
           
@@ -2613,7 +2895,7 @@ async function template6(color_code, username, profile_flag_status, profile_pic,
             padding-bottom: 4px; }
           
           h2 {
-            font-size: 10px;
+            font-size: 12px;
             font-weight: 400;
             line-height: 12px;
             letter-spacing: 0.02em;
@@ -2670,6 +2952,7 @@ async function template6(color_code, username, profile_flag_status, profile_pic,
           
           .left {
             max-width: 190px;
+            width: 260px;
             padding-right: 26px;
             padding-top: 24px;
             border-top: 1px solid rgba(0, 0, 0, 0.15);
@@ -2725,7 +3008,10 @@ async function template6(color_code, username, profile_flag_status, profile_pic,
             line-height: 11px;
             letter-spacing: 0.01em;
             text-align: left;
-            padding-bottom: 6px; }
+            padding-bottom: 6px;
+            white-space: normal;
+            word-wrap: break-word;
+            word-break: break-all; }
           
           .bar {
             background: #D9D9D9;
@@ -2798,13 +3084,13 @@ async function template7(color_code, username, profile_flag_status, profile_pic,
     if(address!='' || email!='' || contact_number!=''){
         contact_section=contact_section+`<table class="table-contact"><tr>`;
         if(address!=''){
-            contact_section=contact_section+`<td><img src="${appURL}uploads/images/template/Location.png"/><span class="span-content">${address}</span></td>`;
+            contact_section=contact_section+`<td style="width: 33.33%; text-align: left;vertical-align: top;padding-right:15px;"><img src="${appURL}uploads/images/template/Location.png"/>&nbsp;&nbsp;<span class="span-content">${address}</span></td>`;
         }
         if(email!=''){
-            contact_section=contact_section+`<td><img src="${appURL}uploads/images/template/Mail_7.png"/><span class="span-content">${email}</span></td>`;
+            contact_section=contact_section+`<td style="width: 33.33%; text-align: left;vertical-align: top;padding-left:15px;padding-right:15px;"><img src="${appURL}uploads/images/template/Mail_7.png"/>&nbsp;&nbsp;<span class="span-content">${email}</span></td>`;
         }
         if(contact_number!=''){
-            contact_section=contact_section+`<td><img src="${appURL}uploads/images/template/Call.png"/><span class="span-content">${contact_number}</span></td>`;
+            contact_section=contact_section+`<td style="width: 33.33%; text-align: left;vertical-align: top;padding-left:15px;"><img src="${appURL}uploads/images/template/Call.png"/>&nbsp;&nbsp;<span class="span-content" >${contact_number}</span></td>`;
         }
         contact_section=contact_section+`</tr></table>`;
     }
@@ -2824,6 +3110,7 @@ async function template7(color_code, username, profile_flag_status, profile_pic,
 
     if (experience_flag_status) {
         experience_section = experience_section + '<tr><td class="label">experience</td><td class="content">';
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -2834,10 +3121,28 @@ async function template7(color_code, username, profile_flag_status, profile_pic,
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -2847,11 +3152,15 @@ async function template7(color_code, username, profile_flag_status, profile_pic,
             experience_section = experience_section + '<div class="subblock"><h4>' + experience[experience_i].company_name + '</h4><h5>' + experience[experience_i].position + '</h5><h6>' + start_date + ' - ' + end_date + '</h6>';
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (responsibilities.length > 0) {
-                experience_section = experience_section + '<ul>';
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + '<li style="font-size: 13px;line-height: 16px;">' + responsibilities[responsibility_i] + '</li>';
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div style="font-size: 13px;line-height: 16px;">'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section = experience_section + '<ul>';
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + '<li style="font-size: 13px;line-height: 16px;">' + responsibilities[responsibility_i] + '</li>';
+                    }
+                    experience_section = experience_section + '</ul>';
                 }
-                experience_section = experience_section + '</ul>';
             }
             experience_section = experience_section + '</div>';
         }
@@ -2867,18 +3176,20 @@ async function template7(color_code, username, profile_flag_status, profile_pic,
     }
 
     if (skill_flag_status) {
-        skill_section = skill_section + '<tr><td class="label">Skills</td><td class="content">';
+        skill_section = skill_section + '<tr><td class="label">Skills</td><td class="content"><div style="line-height: 27px;">';
         for (var skill_i = 0; skill_i < skill.length; skill_i++) {
             skill_section = skill_section + '<span class="pillow" style="padding-bottom: 6px;line-height:14px;font-size:13px;font-weight:400px;">' + skill[skill_i].skill + '</span>';
         }
-        skill_section = skill_section + '</td></tr>';
+        skill_section = skill_section + '</div></td></tr>';
     }
 
     if (language_flag_status) {
         language_section = language_section + '<tr><td class="label">Languages</td>';
         var last_loop_iteration = language.length - 1;
-        language_section = language_section + '<td class="content">';
+        language_section = language_section + '<td class="content"><div style="line-height: 18px;font-size:13px;font-weight:400px;">';
         for (var language_i = 0; language_i < language.length; language_i++) {
+            var i=language_i+1;
+            
             language_section = language_section + language[language_i].language;
             if (language[language_i].rating_status == 1) {
                 var language_rating_symbol = '';
@@ -2895,12 +3206,16 @@ async function template7(color_code, username, profile_flag_status, profile_pic,
                 }
                 language_section = language_section + ': ' + language_rating_symbol;
             }
-
-            if (language_i != last_loop_iteration) {
-                language_section = language_section + '<span class="seperator">&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<span>';
+            if(i%4==0){
+                language_section = language_section+'<br/>';
+            }else{
+                if (language_i != last_loop_iteration) {
+                    language_section = language_section + '<span class="seperator">&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<span>';
+                } 
             }
+            
         }
-        language_section = language_section + '</td>';
+        language_section = language_section + '</div></td>';
     }
 
     if (certificate_flag_status) {
@@ -2964,7 +3279,7 @@ async function template7(color_code, username, profile_flag_status, profile_pic,
           h4 {
             font-size: 16px;
             font-weight: 700;
-            line-height: 12px;
+            line-height: 16px;
             letter-spacing: 0.02em;
             text-align: left;
             padding-bottom: 8px; }
@@ -2996,7 +3311,8 @@ async function template7(color_code, username, profile_flag_status, profile_pic,
             line-height: 11px;
             color: #000000;
             margin-right: 7px;
-            margin-bottom: 3px; }
+            margin-bottom: 3px;
+            display: inline-block; }
           
           .wrapper {
             width: 100%;
@@ -3036,13 +3352,15 @@ async function template7(color_code, username, profile_flag_status, profile_pic,
             padding-top: 30px; }
           
           .table-contact {
-            max-width: 90%;
+            /*max-width: 90%;*/
             width: 100%;
+            table-layout: fixed;
             margin: 0 auto; }
             .table-contact td {
               font-size: 13px;
               line-height: 12px;
-              letter-spacing: .01em; }
+              letter-spacing: .01em;
+              width: 33.33%; }
               .table-contact td > img {
                 margin-right: 6px; }
           
@@ -3135,8 +3453,7 @@ async function template7(color_code, username, profile_flag_status, profile_pic,
                 flex: 1;
                 display: flex;
                 align-items: flex-start;
-                margin: 5px 10px;
-                width: 33.33%;
+                justify-content: center;
             }
           .icon {
                 margin-right: 5px;
@@ -3145,9 +3462,21 @@ async function template7(color_code, username, profile_flag_status, profile_pic,
                 top: 4px;
             }
           .span-content {
+                width: 100%;
                 white-space: normal;
                 word-break: break-all;
             }
+                .fixed-width {
+                    width: 150px; /* Set a fixed width for the table cells */
+                    font-size: 13px;
+                    line-height: 16px; /* Adjusted line-height for better readability */
+                    letter-spacing: .01em;
+                    vertical-align: top; /* Align content to the top */
+                    word-wrap: break-word; /* Ensure long words are wrapped */
+                    overflow-wrap: break-word; /* Ensure long words are wrapped */
+                    padding: 8px; /* Add padding for better spacing */
+                }
+
         </style>
         
     </head>
@@ -3203,10 +3532,11 @@ async function template8(color_code, username, profile_flag_status, profile_pic,
         //profile_pic_tag=`<img src="http://localhost:3000/uploads/images/template/profile_7.png" alt="Profile" class="profile-dp" />`;
     }
     if (objective_flag_status) {
-        objective_section = objective_section + `<div class="about">${objective}</div>`;
+        objective_section = objective_section + `<div class="about" style="max-width: 575px;width: 575px;">${objective}</div>`;
     }
     if (experience_flag_status) {
         experience_section = experience_section + '<tr><td class="label">experience</td><td class="content">';
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -3217,10 +3547,28 @@ async function template8(color_code, username, profile_flag_status, profile_pic,
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -3230,11 +3578,15 @@ async function template8(color_code, username, profile_flag_status, profile_pic,
             experience_section = experience_section + '<div class="item"><h2>' + experience[experience_i].position + ', ' + experience[experience_i].company_name + '</h2><h3>' + start_date + ' - ' + end_date + '</h3>';
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (responsibilities.length > 0) {
-                experience_section = experience_section + '<ul>';
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + '<li style="overflow-wrap: break-word;padding-right:10px;">' + responsibilities[responsibility_i] + '</li>';
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div style="max-width: 575px;width: 575px;color: rgba(0, 0, 0, 0.7);font-size: 14px;font-weight: 400;line-height: 18px;word-wrap: break-word;">'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section = experience_section + '<ul>';
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + '<li style="overflow-wrap: break-word;padding-right:10px;">' + responsibilities[responsibility_i] + '</li>';
+                    }
+                    experience_section = experience_section + '</ul>';
                 }
-                experience_section = experience_section + '</ul>';
             }
             experience_section = experience_section + '</div>';
         }
@@ -3253,10 +3605,17 @@ async function template8(color_code, username, profile_flag_status, profile_pic,
         education_section = education_section + '</td></tr>';
     }
     if (language_flag_status) {
-        language_section = language_section + '<tr><td class="label">Languages</td><td class="content bold" style="font-size: 14px;">';
+        language_section = language_section + '<tr><td class="label">Languages</td><td class="content bold" style="font-size: 14px;line-height:22px;">';
         var last_loop_iteration = language.length - 1;
+        
         for (var language_i = 0; language_i < language.length; language_i++) {
-            language_section = language_section + language[language_i].language;
+            var i=language_i+1;
+            console.log(i,language_i)
+            
+           
+            console.log(language_section)
+            
+            
             var language_rating_symbol = '';
             if (language[language_i].rating_status == 1) {
                 if (language[language_i].rating == 5) {
@@ -3270,24 +3629,49 @@ async function template8(color_code, username, profile_flag_status, profile_pic,
                 } else if (language[language_i].rating == 1) {
                     language_rating_symbol = 'A5';
                 }
-                language_section = language_section + ': ' + language_rating_symbol;
+                // language_section = language_section + ': ' + language_rating_symbol;
+                // if (language_i != last_loop_iteration) {
+                //     language_section = language_section + ' <span class="seperator">&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>';
+                // }
+                
+            }
+            if(i%4==0){
+                if(language_rating_symbol!=''){
+                    language_section = language_section + language[language_i].language+': ' + language_rating_symbol;
+                }else{
+                    language_section = language_section + language[language_i].language;
+                }
+                
+                language_section=language_section+'<br/>';
+                
+            }else{
+                if(language_rating_symbol!=''){
+                    language_section = language_section + language[language_i].language+': ' + language_rating_symbol;
+                }else{
+                    language_section = language_section + language[language_i].language;
+                }
+                //language_section = language_section + language[language_i].language+': ' + language_rating_symbol;
                 if (language_i != last_loop_iteration) {
-                    language_section = language_section + ' <span class="seperator">&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<span>';
+                    language_section = language_section + ' <span class="seperator">&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>';
                 }
             }
         }
-        language_section + language_section + '</td></tr>';
+        
+        language_section = language_section + '</td></tr>';
     }
+    console.log(language_section)
+    //exit ()
     if (skill_flag_status) {
-        skill_section = skill_section + '<tr><td class="label">Skills</td><td class="content bold"  style="font-size: 14px;">';
+        skill_section = skill_section + '<tr><td class="label">Skills</td><td class="content bold"  style="font-size: 14px;line-height:22px;"><div style="max-width:600px;word-wrap: break-word;">';
         var skill_last_iteration = skill.length - 1;
         for (var skill_i = 0; skill_i < skill.length; skill_i++) {
+            
             skill_section = skill_section + skill[skill_i].skill;
             if (skill_i != skill_last_iteration) {
                 skill_section = skill_section + ' <span class="seperator">|</span>';
             }
         }
-        skill_section = skill_section + '</td></tr>';
+        skill_section = skill_section + '</div></td></tr>';
     }
     if (certificate_flag_status) {
         certificate_section = certificate_section + '<tr><td class="label">Certifications</td><td class="content bold">';
@@ -3399,7 +3783,9 @@ async function template8(color_code, username, profile_flag_status, profile_pic,
             letter-spacing: 0em;
             text-align: left;
             /*max-width: 342px;*/
-            max-width: 600px; }
+            // max-width: 600px;
+            // width: 600px; 
+            }
         
         .header {
             position: relative;
@@ -3474,9 +3860,14 @@ async function template8(color_code, username, profile_flag_status, profile_pic,
             line-height: 18px;
             word-wrap: break-word; }
         .content-table .seperator {
-            margin: 0 7px; }
+            margin: 0 7px;
+            color: #999999; }
         .content-table tr:last-child td {
             padding-bottom: 0; }
+        .content{
+            max-width: 575px;
+            width: 575px;
+        }
         
         /*# sourceMappingURL=style.css.map */
             </style>
@@ -3495,7 +3886,7 @@ async function template8(color_code, username, profile_flag_status, profile_pic,
                             </td>
                             <td class="content">
                                 <div class="contact-top">
-                                    <div style="padding-bottom:6px;">${address}</div>
+                                    <div style="max-width: 575px;width: 575px;padding-bottom:6px;">${address}</div>
                                     <div>${contact_number} ${email}</div>
                                 </div>
                                 ${name_section}
@@ -3542,6 +3933,7 @@ async function template9(color_code, username, profile_flag_status, profile_pic,
     var contact_section = '';
     var name_section='';
     var disability_section='';
+    username=username.trim();
     
     
     if (profile_flag_status) {
@@ -3574,7 +3966,7 @@ async function template9(color_code, username, profile_flag_status, profile_pic,
     if (skill_flag_status) {
         skill_section = skill_section + '<div class="block"><h2>Skills</h2>';
         for (var skill_i = 0; skill_i < skill.length; skill_i++) {
-            skill_section = skill_section + `<div class="ellipse-row"><img src="${appURL}uploads/images/template/ellipse.png" /><span>${skill[skill_i].skill}</span></div>`;
+            skill_section = skill_section + `<div class="ellipse-row"><img src="${appURL}uploads/images/template/ellipse.png" /><span style="max-width: 100px;width: 100px;white-space: normal;word-break: break-all;">${skill[skill_i].skill}</span></div>`;
         }
         skill_section = skill_section + '</div>';
     }
@@ -3582,7 +3974,7 @@ async function template9(color_code, username, profile_flag_status, profile_pic,
         certificate_section = certificate_section + '<div class="block"><h2>Certifications</h2>';
         for (var certificate_i = 0; certificate_i < certificate.length; certificate_i++) {
             // class="span-content"
-            //certificate_section = certificate_section + `<div class="ellipse-row"><img src="${appURL}uploads/images/template/ellipse.png" /><span>${certificate[certificate_i].document_type}</span></div>`;
+            //certificate_section = certificate_section + `<div class="ellipse-row"><img src="${appURL}uploads/images/template/ellipse.png" /><span  style="max-width: 100px;width: 100px;white-space: normal;word-break: break-all;">${certificate[certificate_i].document_type}</span></div>`;
             certificate_section = certificate_section + `<div class="ellipse-row-certificate">
                 <img src="${appURL}uploads/images/template/ellipse.png" class="bullet-image" />
                 <span class="document-type">${certificate[certificate_i].document_type}</span>
@@ -3594,7 +3986,7 @@ async function template9(color_code, username, profile_flag_status, profile_pic,
     if (language_flag_status) {
         language_section = language_section + '<div class="block"><h2>Languages</h2>';
         for (var language_i = 0; language_i < language.length; language_i++) {
-            language_section = language_section + `<div class="ellipse-row"><img src="${appURL}uploads/images/template/ellipse.png" /><span>${language[language_i].language}</span></div>`;
+            language_section = language_section + `<div class="ellipse-row"><img src="${appURL}uploads/images/template/ellipse.png" /><span style="width:260px; max-width:260px;white-space: normal;word-break: break-all;">${language[language_i].language}</span></div>`;
         }
         language_section = language_section + '</div>';
     }
@@ -3631,6 +4023,7 @@ async function template9(color_code, username, profile_flag_status, profile_pic,
     }
     if (experience_flag_status) {
         experience_section = experience_section + ' <div class="block"><h2>Experience</h2>';
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -3641,10 +4034,28 @@ async function template9(color_code, username, profile_flag_status, profile_pic,
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -3654,8 +4065,12 @@ async function template9(color_code, username, profile_flag_status, profile_pic,
             experience_section = experience_section + '<div class="subblock"><h3>' + experience[experience_i].company_name + '</h3><h4>' + experience[experience_i].position + '<span class="seperator">|</span><span class="duration">' + start_date + ' - ' + end_date + '</span></h4>';
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (responsibilities.length > 0) {
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + '<div class="description">' + responsibilities[responsibility_i] + '</div>'
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div  class="description">'+responsibilities[0]+'</div>';
+                }else{
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + '<div class="description">' + responsibilities[responsibility_i] + '</div>'
+                    }
                 }
             }
             experience_section = experience_section + '</div>';
@@ -3815,14 +4230,15 @@ async function template9(color_code, username, profile_flag_status, profile_pic,
                 float: left; }
             .contact-row {
                 display: flex;
-                align-items: center; /* Align items vertically center */
+                align-items: flex-start; /* Align items vertically center */
                 flex-wrap: wrap;    /* Allow items to wrap to the next line */
                 }
             .contact-row span {
                 flex: 1; /* Allow the span to take up available space */
             }
             .ellipse-row {
-                padding-bottom: 15px; }
+                padding-bottom: 15px;
+                page-break-inside: avoid; }
                 .ellipse-row:last-child {
                 padding-bottom: 0; }
                 .ellipse-row:after {
@@ -3836,7 +4252,10 @@ async function template9(color_code, username, profile_flag_status, profile_pic,
                 .ellipse-row > span {
                 float: left;
                 font-size: 11px;
-                line-height: 13px; }
+                line-height: 13px;
+                white-space: normal;
+                word-break: break-all; }
+
             
             .block {
                 padding-bottom: 35px; }
@@ -3872,6 +4291,7 @@ async function template9(color_code, username, profile_flag_status, profile_pic,
             .ellipse-row-certificate {
                 display: flex;
                 align-items: center;
+                page-break-inside: avoid;
             }
 
             .bullet-image {
@@ -3959,20 +4379,22 @@ async function template10(color_code, username, profile_flag_status, profile_pic
         contact_section = `<div class="subblock">
                             <h3>Details</h3>
                             <div class="contact contact-detail">
-                                <div style="max-width: 161px;white-space: normal;word-break: break-all;">${address}</div>
-                                <div style="max-width: 161px;white-space: normal;word-break: break-all;">${contact_number}</div>
-                                <div style="max-width: 161px;white-space: normal;word-break: break-all;">${email}</div>
+                                <div style="width: 161px;max-width: 161px;white-space: normal;word-break: break-all;">${address}</div>
+                                <div style="width: 161px;max-width: 161px;white-space: normal;word-break: break-all;">${contact_number}</div>
+                                <div style="width: 161px;max-width: 161px;white-space: normal;word-break: break-all;">${email}</div>
                             </div>
                         </div>`;
     }
     if (skill_flag_status) {
         skill_section = skill_section + '<div class="subblock"><h3>Skills</h3>';
         for (var skill_i = 0; skill_i < skill.length; skill_i++) {
-            skill_section = skill_section + '<div class="p-label" style="margin-bottom:5px;">' + skill[skill_i].skill + '</div>';
+            skill_section = skill_section + '<div class="p-label" style="margin-bottom:5px;width:161px;white-space: normal;word-break: break-all;">' + skill[skill_i].skill + '</div>';
             if (skill[skill_i].rating_status == 1) {
                 skill_section = skill_section + `<div class="bar">
-                                                <div class="bar-fill" style="width: ${skill[skill_i].rating * 20}%;"></div>
-                                            </div>`;
+                                                    <div class="bar-fill" style="width: ${skill[skill_i].rating * 20}%;"></div>
+                                                </div>`;
+            }else{
+                skill_section = skill_section +`<div style="padding-bottom: 5px;"></div>`; 
             }
         }
         skill_section = skill_section + '</div>';
@@ -3987,6 +4409,9 @@ async function template10(color_code, username, profile_flag_status, profile_pic
                     ${education[education_i].qualification} in ${education[education_i].course_name}, <br>${education[education_i].academic_year}
                 </div>
             `;
+            if(education_i!=education.length-1){
+                education_section = education_section + `<br/>`;
+            }
         }
         education_section = education_section + '</div>';
 
@@ -3994,11 +4419,13 @@ async function template10(color_code, username, profile_flag_status, profile_pic
     if (language_flag_status) {
         language_section = language_section + '<div class="subblock lang"><h3>Languages</h3>';
         for (var language_i = 0; language_i < language.length; language_i++) {
-            language_section = language_section + `<div class="contact">${language[language_i].language}</div>`;
+            language_section = language_section + `<div class="contact" style="width:161px;max-width:161px;white-space: normal;word-break: break-all;">${language[language_i].language}</div>`;
             if (language[language_i].rating_status == 1) {
                 language_section = language_section + `<div class="bar">
                                                 <div class="bar-fill" style="width: ${language[language_i].rating * 20}%;"></div>
                                             </div>`;
+            }else{
+                language_section = language_section +`<div style="padding-bottom: 5px;"></div>`;
             }
         }
         language_section = language_section + '</div>';
@@ -4007,15 +4434,19 @@ async function template10(color_code, username, profile_flag_status, profile_pic
         certificate_section = certificate_section + '<div class="subblock"><h3>Certifications</h3>';
         for (var certificate_i = 0; certificate_i < certificate.length; certificate_i++) {
             certificate_section = certificate_section + `
-                <div class="contact">
+                <div class="contact" style="line-height:15px;">
                     ${certificate[certificate_i].document_type}
                 </div>
-            `
+            `;
+            if(certificate_i!=certificate.length-1){
+                certificate_section = certificate_section + `<br/>`;
+            }
         }
         certificate_section = certificate_section + '</div>';
     }
     if (experience_flag_status) {
         //experience_section=experience_section+'<div class="block"><h3>Experience</h3>';
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -4029,6 +4460,7 @@ async function template10(color_code, username, profile_flag_status, profile_pic
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     formated_end_date = await utils.change_data_format(end_date);
                     const date1 = new Date(start_date);
                     const date2 = new Date(end_date);
@@ -4067,6 +4499,24 @@ async function template10(color_code, username, profile_flag_status, profile_pic
                         current_position=sorted_experience[sorted_experience.length-1].position;
                     }
 
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
+                    }
+
                 } else {
                     formated_end_date = 'Present';
                     current_position = experience[experience_i].position;
@@ -4087,11 +4537,15 @@ async function template10(color_code, username, profile_flag_status, profile_pic
             }
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (responsibilities.length > 0) {
-                experience_section = experience_section + '<ul>';
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + '<li>' + responsibilities[responsibility_i] + '</li>';
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div class="list-p">'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section = experience_section + '<ul>';
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + '<li>' + responsibilities[responsibility_i] + '</li>';
+                    }
+                    experience_section = experience_section + '</ul>';
                 }
-                experience_section = experience_section + '</ul>';
             }
             experience_section = experience_section + '</div>';
         }
@@ -4190,6 +4644,13 @@ async function template10(color_code, username, profile_flag_status, profile_pic
                 line-height: 16px;
                 font-weight: 400;
                 }
+
+            .list-p{
+                margin: 0;
+                font-size: 14px;
+                line-height: 16px;
+                font-weight: 400;
+            }
             
             .wrapper {
                 width: 100%;
@@ -4207,7 +4668,7 @@ async function template10(color_code, username, profile_flag_status, profile_pic
             
             .header {
                 padding: 32px;
-                background: #ECECE7; }
+                background: #F4F4F1; }
             
             table {
                 width: 100%; }
@@ -4239,7 +4700,8 @@ async function template10(color_code, username, profile_flag_status, profile_pic
                     background: #F4F4F1;
                     padding: 16px;
                     font-size: 9px;
-                    line-height: 12px; }
+                    line-height: 12px;
+                    width: 161px; }
                 .main-table td.col-large {
                     padding-top: 16px; }
             
@@ -4432,9 +4894,9 @@ async function template11(color_code, username, profile_flag_status, profile_pic
                     ${certificate[certificate_i].document_type}
                 </div>
             `;
-            // if(certificate_i!=certificate.length-1){
-            //     certificate_section=certificate_section+`<br/>`;
-            // }
+            if(certificate_i!=certificate.length-1){
+                certificate_section=certificate_section+`<br/>`;
+            }
         }
         certificate_section = certificate_section + `</div>`;
     }
@@ -4446,6 +4908,7 @@ async function template11(color_code, username, profile_flag_status, profile_pic
             </div>`;
     }
     if (experience_flag_status) {
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             if (experience_i == 0) {
                 experience_section = experience_section + `<div class="block"><h3>Experience</h3>`;
@@ -4461,10 +4924,28 @@ async function template11(color_code, username, profile_flag_status, profile_pic
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -4475,11 +4956,15 @@ async function template11(color_code, username, profile_flag_status, profile_pic
             <h5>${start_date} – ${end_date}, ${experience[experience_i].country}</h5>`;
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (responsibilities.length > 0) {
-                experience_section = experience_section + '<ul>';
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + `<li>${responsibilities[responsibility_i]}</li>`;
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div>'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section = experience_section + '<ul>';
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + `<li>${responsibilities[responsibility_i]}</li>`;
+                    }
+                    experience_section = experience_section + '</ul>';
                 }
-                experience_section = experience_section + '</ul>';
             }
             experience_section = experience_section + '</div>';
         }
@@ -4588,8 +5073,8 @@ async function template11(color_code, username, profile_flag_status, profile_pic
                     .header-table {
                         min-height: 144px; }
                         .header-table img {
-                        width: 32px;
-                        height: 32px;
+                        width: 50px;
+                        height: 50px;
                         border-radius: 50%;
                         display: block;
                         margin: 0 auto;
@@ -4701,14 +5186,14 @@ async function template11(color_code, username, profile_flag_status, profile_pic
                         color: #666666; }
                     .detail-contact-row{
                         display: flex;
-                        align-items: center;
-                        padding-bottom: 5px;
+                        //align-items: center;
+                        padding-bottom: 7px;
                     }
                     .detail-contact-row > img {
                         margin-right: 6px;
                         float: left;
-                        width: 10px;
-                        height: auto; }
+                        width: 12px;
+                        height: 14px; }
                     .detail-contact-row > span {
                         line-height: 1.1;
                         float: left; }
@@ -4811,6 +5296,7 @@ async function template12(color_code, username, profile_flag_status, profile_pic
 
     if (experience_flag_status) {
         experience_section = experience_section + `<h2>Experience</h2>`;
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -4824,6 +5310,7 @@ async function template12(color_code, username, profile_flag_status, profile_pic
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     formated_end_date = await utils.change_data_format(end_date);
                     const date1 = new Date(start_date);
                     const date2 = new Date(end_date);
@@ -4860,7 +5347,23 @@ async function template12(color_code, username, profile_flag_status, profile_pic
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
                     }
-
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
+                    }
                 } else {
                     formated_end_date = 'Present';
                     current_position = experience[experience_i].position;
@@ -4875,11 +5378,15 @@ async function template12(color_code, username, profile_flag_status, profile_pic
             
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (responsibilities.length > 0) {
-                experience_section = experience_section + `<ul>`;
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + `<li>${responsibilities[responsibility_i]}</li>`;
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div  style="color: #050506;font-size:12px;font-weight:400;">'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section = experience_section + `<ul>`;
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + `<li style="color: #050506;font-size:12px;font-weight:400;">${responsibilities[responsibility_i]}</li>`;
+                    }
+                    experience_section = experience_section + `</ul>`;
                 }
-                experience_section = experience_section + `</ul>`;
             }
             experience_section = experience_section + `</div>`;
         }
@@ -4893,7 +5400,7 @@ async function template12(color_code, username, profile_flag_status, profile_pic
     if (skill_flag_status) {
         skill_section = skill_section + `<div class="subblock"><h3>Skills</h3><div>`;
         for (var skill_i = 0; skill_i < skill.length; skill_i++) {
-            skill_section = skill_section + `${skill[skill_i].skill}`;
+            skill_section = skill_section + `<span style="white-space: normal;word-break: break-all;">${skill[skill_i].skill}</span>`;
             if (skill_i != skill.length - 1) {
                 skill_section = skill_section + '<br>';
             }
@@ -4903,7 +5410,7 @@ async function template12(color_code, username, profile_flag_status, profile_pic
     if (language_flag_status) {
         language_section = language_section + `<div class="subblock"><h3>Languages</h3><div>`;
         for (var language_i = 0; language_i < language.length; language_i++) {
-            language_section = language_section + `${language[language_i].language}`;
+            language_section = language_section + `<span style="white-space: normal;word-break: break-all;">${language[language_i].language}</span>`;
             if (language_i != language.length - 1) {
                 language_section = language_section + '<br/>';
             }
@@ -4946,7 +5453,7 @@ async function template12(color_code, username, profile_flag_status, profile_pic
                 additional_feature_section = additional_feature_section + `
                     <h2>${additional_feature[additional_feature_i].type}</h2>
                     <div class="block">
-                        <h3>${additional_feature[additional_feature_i].type_description}</h3>
+                        <div class="item-line-spacing" style="color: #050506;font-size:12px;font-weight:400;">${additional_feature[additional_feature_i].type_description}</div>
                         <!--<h4>${additional_feature[additional_feature_i].type_description}</h4>
                         <div>${additional_feature[additional_feature_i].type_description}</div>-->
                     </div>`;
@@ -4960,7 +5467,7 @@ async function template12(color_code, username, profile_flag_status, profile_pic
             disability_section=disability_section+`
                 <h2>Physical Disability</h2>
                     <div class="block">
-                        <h3>${disability_type}</h3>
+                        <div class="item-line-spacing" style="color: #050506;font-size:12px;font-weight:400;">${disability_type}</div>
                     </div>
                 `;
         }
@@ -5008,7 +5515,7 @@ async function template12(color_code, username, profile_flag_status, profile_pic
             h3 {
                 font-weight: 700;
                 letter-spacing: -0.15px;
-                padding-bottom: 1px;
+                padding-bottom: 3px;
                 font-size: 16px;
                 line-height: 17px; }
             
@@ -5042,7 +5549,8 @@ async function template12(color_code, username, profile_flag_status, profile_pic
                 margin-bottom: 16px; }
             
             .col-sm {
-                width: 217px;
+                width: 230px;
+                max-width: 220px;
                 padding: 40px 32px 40px 18px;
                 border-left: 1px solid rgba(0, 0, 0, 0.1); }
             
@@ -5078,8 +5586,8 @@ async function template12(color_code, username, profile_flag_status, profile_pic
             .picture {
                 margin-bottom: 12px; }
                 .picture img {
-                width: 32px;
-                height: 32px;
+                width: 42px;
+                height: 42px;
                 display: block;
                 border-radius: 50%; }
             
@@ -5176,9 +5684,9 @@ async function template13(color_code, username, profile_flag_status, profile_pic
             //skill_section = skill_section +`<div class="skill-points">${skill[skill_i].skill}</div>`;
             if (skill_i != skill.length - 1) {
                 //skill_section = skill_section + '<br/>';
-                skill_section = skill_section +`<div class="skill-points">${skill[skill_i].skill}</div>`;
+                skill_section = skill_section +`<div class="skill-points" style="max-width:210px;width:217px;white-space: normal;word-break: break-all;">${skill[skill_i].skill}</div>`;
             }else{
-                skill_section=skill_section+`<div>${skill[skill_i].skill}</div>`
+                skill_section=skill_section+`<div style="max-width:210px;width:217px;white-space: normal;word-break: break-all;">${skill[skill_i].skill}</div>`
             }
         }
         skill_section = skill_section + `</div></div>`;
@@ -5215,9 +5723,9 @@ async function template13(color_code, username, profile_flag_status, profile_pic
 
             if (language_i != language.length - 1) {
                 //skill_section = skill_section + '<br/>';
-                language_section = language_section +`<div class="skill-points">${language[language_i].language}</div>`;
+                language_section = language_section +`<div class="skill-points" style="max-width:210px;width:217px;white-space: normal;word-break: break-all;">${language[language_i].language}</div>`;
             }else{
-                language_section=language_section+`<div>${language[language_i].language}</div>`
+                language_section=language_section+`<div style="max-width:210px;width:217px;white-space: normal;word-break: break-all;">${language[language_i].language}</div>`
             }
         }
         language_section = language_section + `</div></div>`;
@@ -5231,6 +5739,7 @@ async function template13(color_code, username, profile_flag_status, profile_pic
     }
     if (experience_flag_status) {
         experience_section = experience_section + `<h3>EXPERIENCE</h3>`;
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -5244,6 +5753,7 @@ async function template13(color_code, username, profile_flag_status, profile_pic
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     formated_end_date = await utils.change_data_format(end_date);
                     const date1 = new Date(start_date);
                     const date2 = new Date(end_date);
@@ -5281,6 +5791,23 @@ async function template13(color_code, username, profile_flag_status, profile_pic
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
                     }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
+                    }
                 } else {
                     formated_end_date = 'Present';
                     current_position = experience[experience_i].position;
@@ -5296,11 +5823,15 @@ async function template13(color_code, username, profile_flag_status, profile_pic
             }
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (responsibilities.length > 0) {
-                experience_section = experience_section + `<div><ul>`;
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + `<li style="line-height:20px;">${responsibilities[responsibility_i]}</li>`;
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div style="line-height:20px">'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section = experience_section + `<div><ul>`;
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + `<li style="line-height:20px;">${responsibilities[responsibility_i]}</li>`;
+                    }
+                    experience_section = experience_section + `</ul></div>`;
                 }
-                experience_section = experience_section + `</ul></div>`;
             }
             experience_section = experience_section + `</div>`;
         }
@@ -5419,9 +5950,10 @@ async function template13(color_code, username, profile_flag_status, profile_pic
                     padding: 40px 32px 32px;
                     border-bottom: 1px solid rgba(0, 0, 0, 0.1); }
                     .header img {
-                    width: 40px;
-                    height: 40px;
+                    width: 60px;
+                    height: 60px;
                     border-radius: 50%;
+                    border: 2.5px solid #B8B6FF;
                     object-fit: contain; }
                     .header .picture {
                     width: 40px; }
@@ -5447,6 +5979,7 @@ async function template13(color_code, username, profile_flag_status, profile_pic
                 
                 .col-sm {
                     width: 217px;
+                    max-wdith: 217px;
                     padding: 16px 20px 40px 48px;
                     vertical-align: top;
                     font-size: 9px;
@@ -5567,6 +6100,7 @@ async function template14(color_code, first_name, last_name, username, profile_f
         `;
     }
     if (experience_flag_status) {
+        var present_status=false;
         experience_section = experience_section + `<h3>Experience</h3>`;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
@@ -5578,10 +6112,28 @@ async function template14(color_code, first_name, last_name, username, profile_f
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -5594,11 +6146,15 @@ async function template14(color_code, first_name, last_name, username, profile_f
                 <h5>${experience[experience_i].company_name}, ${start_date} - ${end_date}</h5>`;
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (responsibilities.length > 0) {
-                experience_section = experience_section + `<div><ul>`;
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + `<li>${responsibilities[responsibility_i]}</li>`;
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div>'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section = experience_section + `<div><ul>`;
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + `<li>${responsibilities[responsibility_i]}</li>`;
+                    }
+                    experience_section = experience_section + `</div></ul>`;
                 }
-                experience_section = experience_section + `</div></ul>`;
             }
             experience_section = experience_section + `</div>`;
         }
@@ -5832,7 +6388,11 @@ async function template14(color_code, first_name, last_name, username, profile_f
                 /*# sourceMappingURL=style.css.map */
                 .split-col {
                     width: 33.33%;
+                    max-width:145px;
+                    white-space: normal;
+                    word-break: break-all;
                 }
+                
             </style>
         </head>
         
@@ -5843,12 +6403,14 @@ async function template14(color_code, first_name, last_name, username, profile_f
                     <table class="profile">
                         <tbody>
                             <tr>
-                                <td class="picture">
+                                <td class="picture" style="position: relative; vertical-align: top;">
                                     ${profile_pic_tag}
                                 </td>
-                                <td class="name">                            
-                                    <h2>${current_position}</h2>
-                                    <h1>${first_name} <br>${last_name}</h1>
+                                <td class="name"> 
+                                    <div style="width:200px;white-space: normal;word-break: break-all;">                           
+                                        <h2>${current_position}</h2>
+                                        <h1>${first_name} <br>${last_name}</h1>
+                                    </div>
                                 </td>
                                 <td class="contact">
                                     ${contact_section}
@@ -5929,7 +6491,7 @@ async function template15(color_code, first_name, last_name, username, profile_f
     }
     if (profile_flag_status) {
         profile_pic_tag = `
-            <td class="picture">
+            <td class="picture" style="position: relative; vertical-align: top;">
                 <img src="${profile_pic}" />
             </td>
         `;
@@ -5966,6 +6528,7 @@ async function template15(color_code, first_name, last_name, username, profile_f
     }
     if (experience_flag_status) {
         experience_section = experience_section + `<h3>Experience</h3>`;
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -5976,10 +6539,28 @@ async function template15(color_code, first_name, last_name, username, profile_f
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -5993,11 +6574,15 @@ async function template15(color_code, first_name, last_name, username, profile_f
             `;
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (responsibilities.length > 0) {
-                experience_section = experience_section + `<div><ul>`;
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + `<li>${responsibilities[responsibility_i]}</li>`;
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div>'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section = experience_section + `<div><ul>`;
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + `<li>${responsibilities[responsibility_i]}</li>`;
+                    }
+                    experience_section = experience_section + `</ul></div>`;
                 }
-                experience_section = experience_section + `</ul></div>`;
             }
             experience_section = experience_section + `</div>`;
         }
@@ -6049,7 +6634,7 @@ async function template15(color_code, first_name, last_name, username, profile_f
                 additional_feature_section = additional_feature_section + `
                     <h3>${additional_feature[additional_feature_i].type}</h3>
                     <div class="block">                                
-                        <div class="desc">${additional_feature[additional_feature_i].type_description}</div>
+                        <div>${additional_feature[additional_feature_i].type_description}</div>
                     </div>`;
             }
         }
@@ -6059,7 +6644,7 @@ async function template15(color_code, first_name, last_name, username, profile_f
             disability_section=disability_section+`
                     <h3>Physical Disability</h3>
                     <div class="block">                                
-                        <div class="desc">${disability_type}</div>
+                        <div>${disability_type}</div>
                     </div>
                 `;
         }
@@ -6265,7 +6850,7 @@ async function template15(color_code, first_name, last_name, username, profile_f
                                         ${objective}
                                     </div>
                                 </td>
-                                <td class="contact">
+                                <td class="contact" style="position: relative; vertical-align: top;">
                                     ${address_section}
                                     ${contact_number_section}
                                     ${email_section}
@@ -6352,6 +6937,7 @@ async function template16(color_code, first_name, last_name, username, profile_f
         language_section = language_section + `</div></div>`
     }
     if (experience_flag_status) {
+        var present_status=false; 
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -6362,10 +6948,28 @@ async function template16(color_code, first_name, last_name, username, profile_f
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date; 
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -6375,11 +6979,15 @@ async function template16(color_code, first_name, last_name, username, profile_f
             experience_section = experience_section + `<div class="block"><h3>${experience[experience_i].position}</h3><h4>${experience[experience_i].company_name}, ${start_date} - ${end_date}</h4>`;
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (responsibilities.length > 0) {
-                experience_section = experience_section + `<ul>`;
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + `<li>${responsibilities[responsibility_i]}</li>`;
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div>'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section = experience_section + `<ul>`;
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + `<li>${responsibilities[responsibility_i]}</li>`;
+                    }
+                    experience_section = experience_section + `</ul>`;
                 }
-                experience_section = experience_section + `</ul>`;
             }
             experience_section = experience_section + `</div>`;
         }
@@ -6448,7 +7056,8 @@ async function template16(color_code, first_name, last_name, username, profile_f
                     font-size: 24px;
                     line-height: 30px;
                     font-weight: 700;
-                    padding-bottom: 4px; }
+                    padding-bottom: 4px;
+                     }
                 
                 h2 {
                     font-size: 14px;
@@ -6512,7 +7121,7 @@ async function template16(color_code, first_name, last_name, username, profile_f
                 
                 .contact-row {
                     display: flex;
-                    align-items: center;
+                    //align-items: center;
                     /*justify-content: center;*/
                     padding-bottom: 8px; }
                     .contact-row:last-child {
@@ -6540,7 +7149,8 @@ async function template16(color_code, first_name, last_name, username, profile_f
                 
                 .box {
                     padding: 20px;
-                    background: #F9F9F9; }
+                    background: #F9F9F9;
+                    border-radius: 8px; }
                 
                 .footer {
                     padding: 16px;
@@ -6612,10 +7222,10 @@ async function template16(color_code, first_name, last_name, username, profile_f
                     <table>
                         <tbody>
                             <tr>
-                                <td>
+                                <td style="max-width:260px; width: 310px;">
                                     ${education_section}
                                 </td>
-                                <td>
+                                <td style="max-width:260px; width: 310px;">
                                     ${certificate_section}
                                 </td>
                             </tr>
@@ -6650,14 +7260,14 @@ async function template17(color_code, first_name, last_name, username, profile_f
     var disability_section='';
 
     if (profile_flag_status) {
-        profile_pic_tag = `<td class="picture">
+        profile_pic_tag = `<td class="picture" style="position: relative; vertical-align: top;">
                             <img src="${profile_pic}" />                     
                         </td>`;
     }
     if (email != '') {
         email_section = `
             <tr>
-                <td class="icon">
+                <td class="icon" style="position: relative; vertical-align: top;">
                     <img src="${appURL}uploads/images/template/Email_17.svg" />
                 </td>
                 <td class="info">${email}</td>
@@ -6667,8 +7277,8 @@ async function template17(color_code, first_name, last_name, username, profile_f
     if (address != '') {
         address_section = `
             <tr>
-                <td class="icon">
-                    <img src="${appURL}uploads/images/template/location_17.svg" />
+                <td class="icon" style="position: relative; vertical-align: top;">
+                    <img src="${appURL}uploads/images/template/location_17.svg" width="16" height="16" />
                 </td>
                 <td class="info">${address}</td>
             </tr>
@@ -6677,8 +7287,8 @@ async function template17(color_code, first_name, last_name, username, profile_f
     if (contact_number != '') {
         contact_number_section = `
             <tr>
-                <td class="icon">
-                    <img src="${appURL}uploads/images/template/phone_17.svg" />
+                <td class="icon" style="position: relative; vertical-align: top;">
+                    <img src="${appURL}uploads/images/template/phone_17.svg" width="16" height="14"/>
                 </td>
                 <td class="info">${contact_number}</td>
             </tr>
@@ -6792,6 +7402,7 @@ async function template17(color_code, first_name, last_name, username, profile_f
             </h3>
             <table class="block">
                 <tbody>`;
+        var present_status=false;
         for (var experience_i = 0; experience_i < experience.length; experience_i++) {
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -6802,10 +7413,28 @@ async function template17(color_code, first_name, last_name, username, profile_f
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_date_format_to_year(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -6820,11 +7449,15 @@ async function template17(color_code, first_name, last_name, username, profile_f
             `;
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if (responsibilities.length > 0) {
-                experience_section = experience_section + `<ul>`;
-                for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
-                    experience_section = experience_section + `<li>${responsibilities[responsibility_i]}</li>`;
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div style="padding-bottom: 7px;">'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section = experience_section + `<ul>`;
+                    for (var responsibility_i = 0; responsibility_i < responsibilities.length; responsibility_i++) {
+                        experience_section = experience_section + `<li>${responsibilities[responsibility_i]}</li>`;
+                    }
+                    experience_section = experience_section + `</ul>`;
                 }
-                experience_section = experience_section + `</ul>`;
             }
             experience_section = experience_section + `<span class="location">${experience[experience_i].country}</span></td></tr>`;
         }
@@ -6918,10 +7551,12 @@ async function template17(color_code, first_name, last_name, username, profile_f
                     padding-top:0px;
                     margin-top:0px; }
                     table .icon {
+                    //align-items: flex-start;
                     vertical-align: middle;
                     width: 23px;
                     text-align: center; }
                     table .icon img {
+                        
                         display: block;
                         width: 16px; }
                     table.contact-with-icon td {
@@ -7062,6 +7697,10 @@ async function template18(color_code, first_name, last_name, username, profile_f
     var address_section = '';
     var email_section = '';
     var disability_section='';
+    var username_padding='45';
+    if(username.length>15){
+        username_padding='20';
+    }
 
     var template_theme_path=`${appURL}uploads/images/template/left-top-bg_18_1.png`;
     if(color_code!=''){
@@ -7154,6 +7793,7 @@ async function template18(color_code, first_name, last_name, username, profile_f
 
     if(experience_flag_status){
         experience_section=experience_section+`<div class="block"><h3>Experience</h3>`;
+        var present_status=false;
         for(var experience_i=0; experience_i<experience.length; experience_i++){
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -7164,10 +7804,28 @@ async function template18(color_code, first_name, last_name, username, profile_f
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -7182,11 +7840,15 @@ async function template18(color_code, first_name, last_name, username, profile_f
             `;
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if(responsibilities.length>0){
-                experience_section=experience_section+`<ul>`;
-                for(var responsibility_i=0; responsibility_i<responsibilities.length; responsibility_i++){
-                    experience_section=experience_section+`<li>${responsibilities[responsibility_i]}</li>`;
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div style="padding-top: 8px;">'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section=experience_section+`<ul>`;
+                    for(var responsibility_i=0; responsibility_i<responsibilities.length; responsibility_i++){
+                        experience_section=experience_section+`<li>${responsibilities[responsibility_i]}</li>`;
+                    }
+                    experience_section=experience_section+`</ul>`;
                 }
-                experience_section=experience_section+`</ul>`;
             }
             experience_section=experience_section+`</div>`;
         }
@@ -7262,6 +7924,8 @@ async function template18(color_code, first_name, last_name, username, profile_f
                 `;
         }
     }
+
+    
 
     var html=`
         <!doctype html>
@@ -7375,9 +8039,13 @@ async function template18(color_code, first_name, last_name, username, profile_f
                     background-image: url(${template_theme_path});
                     background-repeat: no-repeat;
                     background-size: 100%;
-                    text-align: center; }
+                    text-align: center;
+                    //align-items: flex-start;
+                    //justify-content: center;
+                     }
                     .profile .name {
-                    padding-top: 45px;
+                    /*padding-top: 45px;*/
+                    padding-top: ${username_padding}px;
                     height: 110px;
                     max-width: 134px;
                     margin: 0 auto; }
@@ -7386,7 +8054,9 @@ async function template18(color_code, first_name, last_name, username, profile_f
                         height: 104px;
                         margin: 0 auto;
                         border-radius: 50%;
-                        object-fit: contain;
+                        object-fit: fill;
+                        //object-position: center;
+                        display: block;
                     }
                 
                 .left-box {
@@ -7510,7 +8180,9 @@ async function template19(color_code, first_name, last_name, username, profile_f
             contact_section=contact_section+`
                 <tr>
                     <td class="icon">
+                        <div style="padding-top:2px;">
                         <img src="${appURL}uploads/images/template/Mail_19.svg" />
+                        </div>
                     </td>
                     <td style="word-wrap: break-word;white-space: normal;word-break: break-all;">
                         ${email}
@@ -7562,7 +8234,7 @@ async function template19(color_code, first_name, last_name, username, profile_f
     if(objective_flag_status){
         objective_section=objective_section+`
             <div class="block">
-                <h3>Objective</h3>
+                <h3 class="h3-heading">Objective</h3>
                 <p>${objective}</p>
             </div>
         `;
@@ -7571,7 +8243,7 @@ async function template19(color_code, first_name, last_name, username, profile_f
     if(education_flag_status){
         education_section=education_section+`
             <div class="block">
-                <h3>Education</h3>
+                <h3 class="h3-heading">Education</h3>
         `;
         for(var education_i=0; education_i<education.length; education_i++){
             education_section=education_section+`
@@ -7586,7 +8258,8 @@ async function template19(color_code, first_name, last_name, username, profile_f
     }
 
     if(experience_flag_status){
-        experience_section=experience_section+`<div class="block"><h3>Experience</h3>`;
+        experience_section=experience_section+`<div class="block"><h3 class="h3-heading">Experience</h3>`;
+        var present_status=false;
         for(var experience_i=0; experience_i<experience.length; experience_i++){
             var start_date = experience[experience_i].start_date ? experience[experience_i].start_date : '';
             var end_date = experience[experience_i].end_date ? experience[experience_i].end_date : '';
@@ -7597,10 +8270,28 @@ async function template19(color_code, first_name, last_name, username, profile_f
             }
             if (date_status) {
                 if (end_date != '0000-00-00' && end_date != '') {
+                    var end_dates=end_date;
                     end_date = await utils.change_data_format(end_date);
                     var sorted_experience=await utils.sortExperienceByDate(experience,'asc');
                     if(sorted_experience.length>0){
                         current_position=sorted_experience[sorted_experience.length-1].position;
+                    }
+                    //check end date for present
+                    if(!present_status){
+                        var currentDate = new Date();
+                        var currentMonth = currentDate.getMonth();
+                        var currentYear=currentDate.getFullYear();
+                        console.log(currentYear)
+                        
+                        var current_month=currentMonth+1;
+                        var get_end_month=end_dates.split('-');
+                        if(get_end_month.length>0){
+                            console.log(current_month,get_end_month[1])
+                            if(current_month==get_end_month[1] && currentYear==get_end_month[0]){
+                                end_date = 'Present';
+                                present_status=true;
+                            }
+                        }
                     }
                 } else {
                     end_date = 'Present';
@@ -7609,16 +8300,20 @@ async function template19(color_code, first_name, last_name, username, profile_f
             }
             experience_section = experience_section + `
                 <div class="subblock">
-                    <h5 style="max-width: 260px;word-wrap: break-word;">${experience[experience_i].position} at ${experience[experience_i].company_name}</h5>
+                    <h5 style="max-width: 230px;word-wrap: break-word;">${experience[experience_i].position} at ${experience[experience_i].company_name}</h5>
                     <div class="year">${start_date} - ${end_date}</div>
             `;
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if(responsibilities.length>0){
-                experience_section=experience_section+`<ul>`;
-                for(var responsibility_i=0; responsibility_i<responsibilities.length; responsibility_i++){
-                    experience_section=experience_section+`<li>${responsibilities[responsibility_i]}</li>`;
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div style="padding-bottom: 13px;">'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section=experience_section+`<ul style="list-style-position: inside; margin-left: 0; padding-left: 0;">`;
+                    for(var responsibility_i=0; responsibility_i<responsibilities.length; responsibility_i++){
+                        experience_section=experience_section+`<li>${responsibilities[responsibility_i]}</li>`;
+                    }
+                    experience_section=experience_section+`</ul>`;
                 }
-                experience_section=experience_section+`</ul>`;
             }
             experience_section=experience_section+`</div>`;
         }
@@ -7626,7 +8321,7 @@ async function template19(color_code, first_name, last_name, username, profile_f
     }
     
     if(skill_flag_status){
-        skill_section=skill_section+`<div class="block"><h3>Professional Skills</h3><ul class="col-2">`;
+        skill_section=skill_section+`<div class="block"><h3 class="h3-heading">Professional Skills</h3><ul class="col-2">`;
         for(var skill_i=0; skill_i<skill.length; skill_i++){
             skill_section=skill_section+`<li>${skill[skill_i].skill}</li>`
         }
@@ -7638,7 +8333,7 @@ async function template19(color_code, first_name, last_name, username, profile_f
             if(additional_feature[additional_feature_i].show_status==1 && additional_feature[additional_feature_i].type_description!=''){
                 additional_feature_section=additional_feature_section+`
                     <div class="block">
-                            <h3>${additional_feature[additional_feature_i].type}</h3>
+                            <h3 class="h3-heading">${additional_feature[additional_feature_i].type}</h3>
                             <div class="subblock">
                                 <p>${additional_feature[additional_feature_i].type_description}</p>
                             </div>
@@ -7652,7 +8347,7 @@ async function template19(color_code, first_name, last_name, username, profile_f
         if(disability_type!=''){
             disability_section=disability_section+`
                         <div class="block">
-                            <h3>Physical Disability</h3>
+                            <h3 class="h3-heading">Physical Disability</h3>
                             <div class="subblock">
                                 <p>${disability_type}</p>
                             </div>
@@ -7709,7 +8404,10 @@ async function template19(color_code, first_name, last_name, username, profile_f
                     h2 span {
                     background-color: white;
                     padding-left: 23px;
-                    padding-right: 23px; }
+                    padding-right: 23px;
+                    /*text-align: center;*/
+                    word-wrap: break-word;
+                     }
                 
                 h3 {
                     font-size: 13px;
@@ -7720,6 +8418,18 @@ async function template19(color_code, first_name, last_name, username, profile_f
                     text-align: center;
                     padding: 9px;
                     margin-bottom: 20px; }
+                
+                .h3-heading{
+                    font-size: 13px;
+                    font-weight: 700;
+                    line-height: 15px;
+                    letter-spacing: -0.3px;
+                    border: 1px solid currentColor;
+                    text-align: center;
+                    padding: 9px;
+                    margin-bottom: 20px;
+                    width: 170px;
+                }
                 
                 h4 {
                     font-size: 13px;
@@ -7848,12 +8558,12 @@ async function template19(color_code, first_name, last_name, username, profile_f
                 <table class="main">
                     <tbody>
                         <tr>
-                            <td class="left" style="max-width: 200px;">
+                            <td class="left" style="max-width: 180px;width: 180px;">
                                 ${profile_pic_tag}
                                 <h2>
-                                    <span>${first_name}</span>
+                                    <span style="word-wrap: break-word;white-space: normal;word-break: break-all;">${first_name}</span>
                                 </h2>
-                                <h1>${last_name}</h1>
+                                <h1  style="word-wrap: break-word;white-space: normal;word-break: break-all;">${last_name}</h1>
                                 ${contact_section}
                                 ${language_section}
                                 ${certificate_section}
@@ -8073,12 +8783,16 @@ async function template20(color_code, first_name, last_name, username, profile_f
                                 <h4>${experience[experience_i].position} at ${experience[experience_i].company_name}</h4>`;
             var responsibilities = experience[experience_i].responsilbilities ? experience[experience_i].responsilbilities.split(';') : '';
             if(responsibilities.length>0){
-                experience_section=experience_section+`<div><ul>`;
-                for(var responsibility_i=0; responsibility_i<responsibilities.length; responsibility_i++){
-                    experience_section=experience_section+`<li>${responsibilities[responsibility_i]}</li>`;
+                if(responsibilities.length==1){
+                    experience_section = experience_section + '<div style="padding-bottom: 10px;">'+responsibilities[0]+'</div>';
+                }else{
+                    experience_section=experience_section+`<div><ul style="list-style-position: inside; margin-left: 0; padding-left: 0;">`;
+                    for(var responsibility_i=0; responsibility_i<responsibilities.length; responsibility_i++){
+                        experience_section=experience_section+`<li>${responsibilities[responsibility_i]}</li>`;
+                    }
+                    experience_section=experience_section+`</ul></div>`;
+                    }
                 }
-                experience_section=experience_section+`</ul></div>`;
-            }
             experience_section=experience_section+`</td></tr>`;
         }
     }
@@ -8226,7 +8940,8 @@ async function template20(color_code, first_name, last_name, username, profile_f
                     font-size: 24px;
                     font-weight: 600;
                     line-height: 25px;
-                    letter-spacing: -0.2px; }
+                    letter-spacing: -0.2px;
+                    color: #212121; }
 
                     h2 {
                     font-size: 10px;
@@ -8596,20 +9311,30 @@ async function savePdfAndDownload(req, res) {
                             var htmltopdf = await convertHtmlToPdf(file_path, html_code);
                             //console.log(htmltopdf)
                             if (htmltopdf) {
+                                console.log(file_path)
+                                var pdf_file_size=await fs.stat(file_path);
+                                var pdf_size=parseFloat((pdf_file_size.size/1024).toFixed(2));
+                                pdf_size=pdf_size+' KB';
+                                console.log(pdf_size)
+                                console.log(pdf_file_size)
+                                console.log(`File size: ${pdf_file_size.size} bytes`);
                                 var pdftoimage = await convertPdfToImage(user_id, file_path);
                                 console.log('pdf to image ', pdftoimage);
-                                body=JSON.stringify(body).replace(/'/g, "''");
+                                body=JSON.stringify(body).replace(/'/g, "''").replace(/\\/g, '\\\\').replace(/"/g, '\\"');
                                 let data_saved_status = false;
                                 if (id != '') {
+                                    //now the edit limit is 1 time. so i set 0 as static 
+                                    var edit_limit_balance=0;
                                     //update to db
-                                    var update_data = await queries.updateCvData(id, current_datetime, user_id, file_name, file_path, JSON.stringify(pdftoimage), body);
+                                    var update_data = await queries.updateCvData(id, current_datetime, user_id, file_name, file_path, pdf_size, JSON.stringify(pdftoimage), body, edit_limit_balance);
                                     console.log(update_data);
                                     if (update_data.affectedRows > 0) {
                                         data_saved_status = true;
                                     }
                                 } else {
                                     //save to db
-                                    var save_data = await queries.saveCvData(current_datetime, user_id, file_name, file_path, JSON.stringify(pdftoimage), body);
+                                    //temparory set cv edit limit is 1
+                                    var save_data = await queries.saveCvData(current_datetime, user_id, file_name, file_path, pdf_size, JSON.stringify(pdftoimage), body,1);
                                     console.log(save_data)
                                     if (save_data > 0) {
                                         data_saved_status = true;
